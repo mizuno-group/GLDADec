@@ -1,2 +1,2 @@
 # GLDADec
-Guided LDA Deconvolution
+Guided Latent Dirichlet Allocation Deconvolution
