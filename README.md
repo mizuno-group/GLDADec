@@ -1,4 +1,4 @@
-# GLDADec: !! Under construction !!
+# GLDADec: -- Under Construction --
 Guided Latent Dirichlet Allocation Deconvolution
 
 ## Authors
