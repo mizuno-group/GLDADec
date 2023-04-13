@@ -1,0 +1,18 @@
+221223
+=== Compile ===
+how to compile *.pyx
+move to this directory (cd /mnt/AzumaDeconv/github/GLDADec/Dev/gldadec)
+	>> python setup.py build_ext --inplace
+
+** Products **
+1. "build" folder
+2. _lda_basic.cpython-39-x86_64-linux-gnu.so
+
+
+=== Initial trial (HBRTR1: Ubuntu) ===
+- No module named 'Cython'
+	>> pip install cython
+- command 'gcc' failed: No such file or directory
+	>> sudo apt-get install gcc 
+	(if error occures : sudo apt-get update and retry)
+
