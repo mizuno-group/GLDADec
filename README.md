@@ -1,6 +1,5 @@
-# GLDADec
+# GLDADec: !! Under construction !!
 Guided Latent Dirichlet Allocation Deconvolution
-!! Under construction !!
 
 ## Authors
 Iori Azuma and Tadahaya Mizuno
