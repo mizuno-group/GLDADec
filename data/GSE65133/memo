@@ -1,0 +1,8 @@
+221223
+facs_results.csv: Cell subset proportions were collected from description of GEO sample characteristics.
+GSE65133_expression.csv:  Obtained from Series Matrix Files
+
+230126
+LM22_deg_dic.pkl : merge NK cells. log FC = 1.0
+LM22_max_deg_dic.pkl : merge NK cells. log FC = 0.0
+LM22_2_deg_dic.pkl: merge NK cells. log FC = 2.0
