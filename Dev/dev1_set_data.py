@@ -171,8 +171,8 @@ class SetData():
         else:
             pass
         
-        union = list(set(random_genes) | set(genes))
-        common = list(set(raw_df.index.tolist()) & set(union))
+        union = sorted(list(set(random_genes) | set(genes)))
+        common = sorted(list(set(raw_df.index.tolist()) & set(union))) # fix the output gene order
         final_df = raw_df.loc[common]
         self.final_int = final_df.astype(int) # convert int
         self.input_mat = np.array(self.final_int.T,dtype='int64')
