@@ -295,13 +295,13 @@ class Deconvolution():
             init_df = pd.DataFrame(model.initial_freq,columns=self.final_int_dec.index.tolist()) # (topic, gene)
             
             if len(res.T) > len(target):
-                target = target+[i+1 for i in range(add_topic)]
+                new_target = target+[i+1 for i in range(add_topic)]
             else:
-                pass
+                new_target = target
 
-            res.columns = target
-            gc_df.columns = target
-            init_df.index = target
+            res.columns = new_target
+            gc_df.columns = new_target
+            init_df.index = new_target
 
             #norm_res = pc.standardz_sample(res) # sample-wide
             total_res.append(res)

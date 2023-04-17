@@ -320,7 +320,7 @@ def estimation_var(total_res,cell='Neutrophil'):
         data.append(list(summary_df.loc[sample]))
     
     # plot bar
-    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=True)
+    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False)
 
 
 def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names = ["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True):
@@ -339,7 +339,7 @@ def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,
     if grey:
         ax.bar([i for i in range(len(data))],df.mean(),yerr=df.std(),tick_label=df.columns,error_kw=error_bar_set)
     else:
-        ax.bar([i for i in range(len(data))],df.mean(),yerr=df.std(),tick_label=df.columns,error_kw=error_bar_set,color='rgbkymc')
+        ax.bar([i for i in range(len(data))],df.mean(),yerr=df.std(),tick_label=df.columns,error_kw=error_bar_set)
     # jitter plot
     df_melt = pd.melt(df)
     sns.stripplot(x='variable', y='value', data=df_melt, jitter=True, color='black', ax = ax, size=3)
