@@ -155,6 +155,8 @@ class GLDADeconvMS():
             (e.g.)
             126: [1], 161: [1], 216: [1, 2, 3, 6], 23: [1]
                 fix 126, 161, 23 and set free 216
+        fix_seed_k: bool
+            Ignore the seed_k info and regard the cell specific marker genes as anchor.
         """
         #random_state = utils.check_random_state(self.random_state)
         rng = np.random.RandomState(self.random_state)
@@ -171,6 +173,7 @@ class GLDADeconvMS():
                 seed_k = np.array(seed_k)
                 if self.verbose:
                     print("seed_k :",len(seed_k),"genes")
+        # regard cell specific marker genes as anchor genes
         else:
             seed_k = []
             for i,k in enumerate(seed_topics):
@@ -215,7 +218,6 @@ class GLDADeconvMS():
         self.word_topic_ = self.word_topic_.T
         self.doc_topic_ = (self.ndz_ + self.alpha).astype(float)
         self.doc_topic_ /= np.sum(self.doc_topic_, axis=1)[:, np.newaxis]
-        
 
         # delete attributes no longer needed after fitting to save memory and reduce clutter
         #del self.WS
