@@ -267,7 +267,7 @@ class GLDADeconvMS():
             # check if seeded initialization
             if w in seed_topics and random.random() < initial_confidence: # 0 <= random.random() < 1
                 topic_candi = seed_topics[w]
-                # FIXME: do not fix the random state
+                # FIXME: do not fix random state --> bias
                 #random.seed(self.random_state)
                 z_new = random.sample(topic_candi,1)[0]
             else:

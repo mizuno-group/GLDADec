@@ -8,6 +8,8 @@ Created on Tue Dec 27 13:19:33 2022
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from tqdm import tqdm
+from scipy import stats
 import matplotlib.pyplot as plt
 
 def standardz_sample(x):
@@ -349,3 +351,33 @@ def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,
     plt.title(title)
     plt.xticks(rotation=60)
     plt.show()
+
+def group_ttest(df,target_samples=['Ctrl','APAP']):
+    samples = df.columns.tolist()
+    ctrl_samples = []
+    treat_samples = []
+    for t in samples:
+        if t.split('_')[0] == target_samples[0]:
+            ctrl_samples.append(t)
+        elif t.split('_')[0] == target_samples[1]:
+            treat_samples.append(t)
+        else:
+            pass
+
+    ctrl_df = df[ctrl_samples]
+    treat_df = df[treat_samples]
+
+    # Welch t-test
+    whole_genes = df.index.tolist()
+    stat_res = []
+    p_res = []
+    for gene in tqdm(whole_genes):
+        ctrl_v = np.array(ctrl_df.loc[gene])
+        treat_v = np.array(treat_df.loc[gene])
+        stat, p = stats.ttest_ind(ctrl_v, treat_v, equal_var=False)
+        stat_res.append(stat)
+        p_res.append(p)
+
+    res_df = pd.DataFrame({'statistic':stat_res, 'pvalue':p_res},index=whole_genes)
+    return res_df
+
