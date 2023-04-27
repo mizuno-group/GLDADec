@@ -309,7 +309,7 @@ def plot_cor_error(total_res,val_df,dec_name=['B cells naive'],val_name=['Naive 
     
     return total_cor,z_res[0].tolist(),z_ref[0].tolist(),label
 
-def estimation_var(total_res,cell='Neutrophil'):
+def estimation_var(total_res,cell='Neutrophil',dpi=100):
     summary_df = pd.DataFrame()
     for idx,tmp_df in enumerate(total_res):
         cell_df = tmp_df[[cell]]
@@ -322,16 +322,16 @@ def estimation_var(total_res,cell='Neutrophil'):
         data.append(list(summary_df.loc[sample]))
     
     # plot bar
-    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False)
+    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False,dpi=dpi)
 
 
-def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names = ["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True):
+def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names = ["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True, dpi=100):
     sns.set()
     sns.set_style('whitegrid')
     if grey:
         sns.set_palette('gist_yarg')
         
-    fig,ax = plt.subplots(figsize=(12,6),dpi=100)
+    fig,ax = plt.subplots(figsize=(12,6),dpi=dpi)
     
     df = pd.DataFrame()
     for i in range(len(data)):
