@@ -111,12 +111,12 @@ class Evaluation():
         except:
             raise ValueError('res_name or ref_name is not correct')
     
-    def evaluate_multi_group(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100):
+    def evaluate_multi_group(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100,dpi=100):
         # ecaluate each cell
         try:
             a = dev_utils.plot_group_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
                                            dec_name=res_name,val_name=ref_name,
-                                           do_plot=True,sep=True,dpi=100)
+                                           do_plot=True,sep=True,dpi=dpi)
             cor = a[-1]
             return cor
         except:
@@ -177,12 +177,12 @@ class Evaluation():
     
     def multi_eval_multi_group(self,
                                res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                               ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],plot_size=100):
+                               ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],plot_size=100,dpi=100):
         cor_list = []
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
-            cor = self.evaluate_multi_group(res_name=res_name,ref_name=ref_name)
+            cor = self.evaluate_multi_group(res_name=res_name,ref_name=ref_name,dpi=dpi)
             cor_list.append(cor)
         
         new_k = [t[0] for t in res_names]

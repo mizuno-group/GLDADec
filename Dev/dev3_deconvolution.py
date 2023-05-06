@@ -258,7 +258,7 @@ class Deconvolution():
         del model
         gc.collect()
     
-    def ensemble_deconv(self,add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,fix_seed_k=True):
+    def ensemble_deconv(self,add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,fix_seed_k=True,verbose=False):
         target = list(self.marker_dec_dic.keys())
         input_mat = self.input_mat_dec
         seed_topics = self.seed_topics
@@ -278,7 +278,7 @@ class Deconvolution():
                 eta=eta, 
                 random_state=rs,
                 refresh=refresh,
-                verbose=False
+                verbose=verbose
                 )
             model.fit(input_mat,seed_topics=seed_topics,
                       initial_conf=initial_conf,seed_conf=seed_conf,other_conf=other_conf,fix_seed_k=fix_seed_k,seed_k=seed_k)
@@ -307,7 +307,8 @@ class Deconvolution():
             total_res.append(res)
             total_res2.append(init_df)
             gene_contribution.append(gc_df)
-            print(idx+1,end=" ")
+            if self.verbose:
+                print(idx+1,end=" ")
             
             del model
             gc.collect()
