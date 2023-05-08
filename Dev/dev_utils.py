@@ -8,6 +8,8 @@ Created on Tue Dec 27 13:19:33 2022
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from tqdm import tqdm
+from scipy import stats
 import matplotlib.pyplot as plt
 
 def standardz_sample(x):
@@ -307,7 +309,7 @@ def plot_cor_error(total_res,val_df,dec_name=['B cells naive'],val_name=['Naive 
     
     return total_cor,z_res[0].tolist(),z_ref[0].tolist(),label
 
-def estimation_var(total_res,cell='Neutrophil'):
+def estimation_var(total_res,cell='Neutrophil',dpi=100):
     summary_df = pd.DataFrame()
     for idx,tmp_df in enumerate(total_res):
         cell_df = tmp_df[[cell]]
@@ -320,16 +322,16 @@ def estimation_var(total_res,cell='Neutrophil'):
         data.append(list(summary_df.loc[sample]))
     
     # plot bar
-    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False)
+    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False,dpi=dpi)
 
 
-def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names = ["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True):
+def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names = ["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True, dpi=100):
     sns.set()
     sns.set_style('whitegrid')
     if grey:
         sns.set_palette('gist_yarg')
         
-    fig,ax = plt.subplots(figsize=(12,6),dpi=100)
+    fig,ax = plt.subplots(figsize=(12,6),dpi=dpi)
     
     df = pd.DataFrame()
     for i in range(len(data)):
@@ -349,3 +351,33 @@ def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,
     plt.title(title)
     plt.xticks(rotation=60)
     plt.show()
+
+def group_ttest(df,target_samples=['Ctrl','APAP']):
+    samples = df.columns.tolist()
+    ctrl_samples = []
+    treat_samples = []
+    for t in samples:
+        if t.split('_')[0] == target_samples[0]:
+            ctrl_samples.append(t)
+        elif t.split('_')[0] == target_samples[1]:
+            treat_samples.append(t)
+        else:
+            pass
+
+    ctrl_df = df[ctrl_samples]
+    treat_df = df[treat_samples]
+
+    # Welch t-test
+    whole_genes = df.index.tolist()
+    stat_res = []
+    p_res = []
+    for gene in tqdm(whole_genes):
+        ctrl_v = np.array(ctrl_df.loc[gene])
+        treat_v = np.array(treat_df.loc[gene])
+        stat, p = stats.ttest_ind(ctrl_v, treat_v, equal_var=False)
+        stat_res.append(stat)
+        p_res.append(p)
+
+    res_df = pd.DataFrame({'statistic':stat_res, 'pvalue':p_res},index=whole_genes)
+    return res_df
+

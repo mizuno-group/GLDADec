@@ -201,8 +201,9 @@ def freq_norm(df,marker_dic,ignore_others=True):
     others = sorted(list(set(df.index.tolist()) - set(itertools.chain.from_iterable(marker_dic.values()))))
     if len(others)>0:
         other_dic = {'others':others}
-        marker_dic = marker_dic | other_dic
-    
+        #marker_dic = marker_dic | other_dic # Python 3.9
+        marker_dic = {**marker_dic,**other_dic}
+
     # normalize
     use_k = []
     use_v = []

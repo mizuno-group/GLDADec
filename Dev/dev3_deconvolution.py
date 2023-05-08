@@ -19,7 +19,6 @@ BASE_DIR = Path(__file__).parent
 print(BASE_DIR)
 
 sys.path.append(BASE_DIR)
-#pprint.pprint(sys.path)
 
 from Dev.gldadec import glda_deconv_multi_seed
 
@@ -258,7 +257,7 @@ class Deconvolution():
         del model
         gc.collect()
     
-    def ensemble_deconv(self,add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0):
+    def ensemble_deconv(self,add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,fix_seed_k=True,verbose=False):
         target = list(self.marker_dec_dic.keys())
         input_mat = self.input_mat_dec
         seed_topics = self.seed_topics
@@ -278,10 +277,10 @@ class Deconvolution():
                 eta=eta, 
                 random_state=rs,
                 refresh=refresh,
-                verbose=False
+                verbose=verbose
                 )
             model.fit(input_mat,seed_topics=seed_topics,
-                      initial_conf=initial_conf,seed_conf=seed_conf,other_conf=other_conf, fix_seed_k=True, seed_k=seed_k)
+                      initial_conf=initial_conf,seed_conf=seed_conf,other_conf=other_conf,fix_seed_k=fix_seed_k,seed_k=seed_k)
             # plot log-likelihood
             ll = model.loglikelihoods_
             ll_list.append(ll)
@@ -307,7 +306,8 @@ class Deconvolution():
             total_res.append(res)
             total_res2.append(init_df)
             gene_contribution.append(gc_df)
-            print(idx+1,end=" ")
+            if self.verbose:
+                print(idx+1,end=" ")
             
             del model
             gc.collect()
@@ -316,6 +316,7 @@ class Deconvolution():
         self.total_res2 = total_res2
         self.ll_list = ll_list
         self.gene_contribution = gene_contribution
+
         
 def main():
     in_path = '/mnt/AzumaDeconv/github/GLDADec/Dev/test_data/'
