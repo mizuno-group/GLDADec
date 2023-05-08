@@ -19,7 +19,6 @@ BASE_DIR = Path(__file__).parent
 print(BASE_DIR)
 
 sys.path.append(BASE_DIR)
-#pprint.pprint(sys.path)
 
 from Dev.gldadec import glda_deconv_multi_seed
 
@@ -317,6 +316,7 @@ class Deconvolution():
         self.total_res2 = total_res2
         self.ll_list = ll_list
         self.gene_contribution = gene_contribution
+
         
 def main():
     in_path = '/mnt/AzumaDeconv/github/GLDADec/Dev/test_data/'
