@@ -32,9 +32,10 @@ from Dev.gldadec import utils
 
 #%%
 class Pipeline():
-    def __init__(self):
+    def __init__(self,verbose=False):
         self.df = None
         self.marker_dic = None
+        self.verbose=verbose
     
     def set_data(self,df,marker_dic:dict):
         self.df = df
@@ -97,7 +98,7 @@ class Pipeline():
     
     def deocnv_prep(self,random_sets:list,do_plot=True,specific=True,scale=10):
         # dev1
-        SD = dev1_set_data.SetData()
+        SD = dev1_set_data.SetData(verbose=self.verbose)
         SD.set_expression(df=self.deconv_df) 
         SD.set_marker(marker_dic=self.target_dic)
         SD.marker_info_processing(do_plot=do_plot)
@@ -220,6 +221,45 @@ class Pipeline():
 
         self.cor_dic = Eval.cor_dic
         pprint.pprint(self.cor_dic)
-    
 
+    def add_profile_eval(self,add_topic=10,topn=None):
+        gcr = self.gene_contribution_res
+        # summarize gene contributions
+        l = []
+        for t in gcr:
+            sorted_genes = sorted(t[0].index.tolist())
+            gc_df = t[0].loc[sorted_genes]
+            l.append(gc_df)
+        gc_m = sum(l)/len(l)
+        add_gc = gc_m[[i+1 for i in range(add_topic)]] # added topics
+        other_genes = self.other_genes
+        add_gc_other = add_gc.loc[other_genes] # added gene contribution to added topics
+        if topn is None:
+            topn = int(len(add_gc_other)/add_topic/10) # soft threshold
 
+        target_genes = []
+        for t in add_gc_other.columns.tolist():
+            tmp_df = add_gc_other[[t]].sort_values(t,ascending=False)
+            top_genes = tmp_df.index.tolist()[0:topn] # high contribution to the topic
+            target_genes.extend(top_genes)
+
+        target_gc_other = add_gc_other.loc[sorted(list(set(target_genes)))]
+
+        # overlap eval
+        if len(target_gc_other) != len(target_genes):
+            overlap = True
+        else:
+            overlap = False
+        
+        # correlation eval
+        cor = target_gc_other.corr()
+        sns.heatmap(cor,annot=True,fmt="1.2f")
+        plt.show()
+
+        cor = cor.replace(1,-1)
+        cor_max = cor.max().max()
+        if cor_max > 0:
+            posi_cor = True
+        else:
+            posi_cor = False
+        return overlap,posi_cor
