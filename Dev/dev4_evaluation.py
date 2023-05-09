@@ -187,7 +187,7 @@ class Evaluation():
         
         new_k = [t[0] for t in res_names]
         self.cor_dic = dict(zip(new_k,cor_list))
-        
+    
         
 def main():
     target_facs = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/facs_results.csv',index_col=0)
