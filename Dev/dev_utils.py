@@ -11,6 +11,7 @@ import seaborn as sns
 from tqdm import tqdm
 from scipy import stats
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error
 
 def standardz_sample(x):
     pop_mean = x.mean(axis=0)
@@ -99,11 +100,17 @@ def plot_group_corr(deconv_df,val_df,dec_name=["CD4","CD8"],val_name=["abT"],sor
     
     total_x = deconv_df[dec_name].sum(axis=1).tolist()
     total_y = val_df[val_name].sum(axis=1).tolist()
-    total_cor = round(np.corrcoef(total_x,total_y)[0][1],4)
+    total_cor, pvalue = stats.pearsonr(total_x,total_y) # correlation and pvalue
+    total_cor = round(total_cor,4)
+    if pvalue < 0.01:
+        pvalue = '{:.2e}'.format(pvalue)
+    else:
+        pvalue = round(pvalue,3)
+    rmse = round(np.sqrt(mean_squared_error(total_x, total_y)),4)
     
     if do_print:
         print(str(dec_name)+" vs "+str(val_name))
-        print(total_cor)
+        print(total_cor,pvalue,rmse)
     
     if do_plot:
         fig,ax = plt.subplots(figsize=(6,6),dpi=dpi)
@@ -127,10 +134,12 @@ def plot_group_corr(deconv_df,val_df,dec_name=["CD4","CD8"],val_name=["abT"],sor
                 x_max = xmax
         
         plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+        plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
         
-        plt.text(0.3,0.05,'Cor = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
-        
-        plt.legend(shadow=True)
+        #plt.legend(loc='upper center',shadow=True,fontsize=13,ncol=2,bbox_to_anchor=(.45, 1.12))
+        plt.legend(loc="upper left", bbox_to_anchor=(0.95, 1),shadow=True,fontsize=13)
         plt.xlabel("Deconvolution estimated value",fontsize=15)
         plt.ylabel("Flow cytometry value",fontsize=15)
         plt.gca().spines['right'].set_visible(False)
