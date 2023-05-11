@@ -38,8 +38,13 @@ class Pipeline():
         self.verbose=verbose
     
     def set_data(self,df,marker_dic:dict):
+        df.index = [t.upper() for t in df.index.tolist()]
+        upper_v = []
+        for i,k in enumerate(marker_dic):
+            upper_v.append([t.upper() for t in marker_dic.get(k)])
+        new_dic = dict(zip(list(marker_dic.keys()), upper_v))
         self.df = df
-        self.marker_dic = marker_dic
+        self.marker_dic = new_dic
     
     def sample_selection(self,target_samples=['Ctrl', 'APAP']):
         """
@@ -71,8 +76,10 @@ class Pipeline():
         else:
             raise ValueError('!! set other method !!')
     
-    def add_marker_genes(self,target_cells = ['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer']):
+    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer']):
         marker_dic = self.marker_dic
+        if len(target_cells)==0:
+            target_cells = list(marker_dic.keys())
         target_v = []
         for cell in target_cells:
             target_v.append(marker_dic.get(cell))
