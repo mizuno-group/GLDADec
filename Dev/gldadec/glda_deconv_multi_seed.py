@@ -17,7 +17,7 @@ from Dev.gldadec import _lda_basic
 from Dev.gldadec import utils
 import random
 
-logger = logging.getLogger('guidedlda')
+logger = logging.getLogger('glda_deconv_multi_seed')
 
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
@@ -191,7 +191,7 @@ class GLDADeconvMS():
                 rng.shuffle(rands)
                 if it % self.refresh == 0:
                     ll = self.loglikelihood()
-                    logger.info("<{}> log likelihood: {:.0f}".format(it, ll))
+                    #logger.info("<{}> log likelihood: {:.0f}".format(it, ll))
                     # keep track of loglikelihoods for monitoring convergence
                     self.loglikelihoods_.append(ll)
                 self._sample_topics(rands,seed_k,seed_conf,other_conf)
@@ -201,13 +201,13 @@ class GLDADeconvMS():
                 rng.shuffle(rands)
                 if it % self.refresh == 0:
                     ll = self.loglikelihood()
-                    logger.info("<{}> log likelihood: {:.0f}".format(it, ll))
+                    #logger.info("<{}> log likelihood: {:.0f}".format(it, ll))
                     # keep track of loglikelihoods for monitoring convergence
                     self.loglikelihoods_.append(ll)
                 self._sample_topics(rands,seed_k,seed_conf,other_conf)
                 
         ll = self.loglikelihood()
-        logger.info("<{}> log likelihood: {:.0f}".format(self.n_iter - 1, ll))
+        #logger.info("<{}> log likelihood: {:.0f}".format(self.n_iter, ll))
         # note: numpy /= is integer division
         self.components_ = (self.nzw_ + self.eta).astype(float)
         self.components_ /= np.sum(self.components_, axis=1)[:, np.newaxis]
@@ -244,11 +244,11 @@ class GLDADeconvMS():
         N = int(X.sum())
         n_topics = self.n_topics
         n_iter = self.n_iter
-        logger.info("n_documents: {}".format(D))
-        logger.info("vocab_size: {}".format(W))
-        logger.info("n_words: {}".format(N))
-        logger.info("n_topics: {}".format(n_topics))
-        logger.info("n_iter: {}".format(n_iter))
+        #logger.info("n_documents: {}".format(D))
+        #logger.info("vocab_size: {}".format(W))
+        #logger.info("n_words: {}".format(N))
+        #logger.info("n_topics: {}".format(n_topics))
+        #logger.info("n_iter: {}".format(n_iter))
 
         self.beta = 0.1
         self.nzw_ = nzw_ = np.zeros((n_topics, W), dtype=np.intc) # + self.beta

@@ -11,6 +11,7 @@ import gc
 import copy
 import random
 import pprint
+import logging
 import itertools
 import pandas as pd
 import seaborn as sns
@@ -19,7 +20,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
 Base_dir = '/workspace/github/GLDADec' # cloning repository
-
 import sys
 sys.path.append(Base_dir)
 from Dev import dev_utils
@@ -27,8 +27,10 @@ from Dev import dev1_set_data
 from Dev import dev2_anchor_detection
 from Dev import dev3_deconvolution
 from Dev import dev4_evaluation
-
 from Dev.gldadec import utils
+
+#%%
+logger = logging.getLogger('pipeline')
 
 #%%
 class Pipeline():
@@ -45,7 +47,7 @@ class Pipeline():
         new_dic = dict(zip(list(marker_dic.keys()), upper_v))
         self.df = df
         self.marker_dic = new_dic
-    
+
     def sample_selection(self,target_samples=['Ctrl', 'APAP']):
         """
         Ctrl vs one administration group
@@ -58,6 +60,7 @@ class Pipeline():
             else:
                 pass
         self.target_df = self.df[use_samples]
+        logger.info('n_samples: {}'.format(len(use_samples)))
     
     def gene_selection(self,method='CV',topn=500):
         """
@@ -75,6 +78,7 @@ class Pipeline():
             self.high_df = cv_df.loc[self.high_genes]
         else:
             raise ValueError('!! set other method !!')
+        logger.info('method: {}, n_top: {}'.format(method,topn))
     
     def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer']):
         marker_dic = self.marker_dic
@@ -94,6 +98,7 @@ class Pipeline():
 
         # other genes
         self.other_genes = sorted(list(set(self.target_linear.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
+        logger.info('target_cells: {}, n_genes: {}'.format(target_cells,len(target_genes)))
     
     def prior_info_norm(self,scale=1000,norm=True):
         if norm:
@@ -102,6 +107,7 @@ class Pipeline():
             self.deconv_df = linear_norm/scale
         else:
             self.deconv_df = self.target_linear
+        logger.info('prior_norm: {}'.format(norm))
     
     def deocnv_prep(self,random_sets:list,do_plot=True,specific=True,scale=10):
         # dev1
@@ -134,6 +140,7 @@ class Pipeline():
             cor = self.mm_df.corr()
             sns.heatmap(cor)
             plt.show()
+        logger.info('minmax_scaling: {}'.format(scale))
     
     def deconv(self,n=100,add_topic=0,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=True):
         original_order = sorted(self.mm_df.index.tolist())
@@ -160,6 +167,7 @@ class Pipeline():
             # log-likelihood
             ll_list = Dec.ll_list
             final_ll_list.append(ll_list[-1])
+            logger.info("<iter: {}> log-likelihood: {}".format(i+1, ll_list[-1]))
             if ll_plot:
                 if i == 0:
                     fig,ax = plt.subplots(figsize=(5,4),dpi=100)
@@ -174,7 +182,6 @@ class Pipeline():
                     plt.gca().xaxis.set_ticks_position('bottom')
                     ax.set_axisbelow(True)
                     plt.show()
-                    
             total_res = Dec.total_res
             merge_total_res.append(total_res[0])
             gene_contribution_res.append(Dec.gene_contribution)
@@ -190,6 +197,7 @@ class Pipeline():
                     dev_utils.estimation_var(total_res=merge_total_res,cell=str(cell))
                 except:
                     pass
+        logger.info('n_ensemble: {}, n_add_topics: {}, n_iter: {}'.format(n,add_topic,n_iter))
             
     def evaluate(self,facs_df=None,deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
     res_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
@@ -228,6 +236,10 @@ class Pipeline():
 
         self.cor_dic = Eval.cor_dic
         pprint.pprint(self.cor_dic)
+        logger.info('deconv_norm_range: {}'.format(deconv_norm_range))
+        logger.info('facs_norm_range: {}'.format(facs_norm_range))
+        logger.info('res_names: {}'.format(res_names))
+        logger.info('facs_names: {}'.format(ref_names))
 
     def add_profile_eval(self,add_topic=10,topn=None):
         gcr = self.gene_contribution_res
@@ -249,7 +261,6 @@ class Pipeline():
             tmp_df = add_gc_other[[t]].sort_values(t,ascending=False)
             top_genes = tmp_df.index.tolist()[0:topn] # high contribution to the topic
             target_genes.extend(top_genes)
-
         target_gc_other = add_gc_other.loc[sorted(list(set(target_genes)))]
 
         # overlap eval
@@ -269,4 +280,5 @@ class Pipeline():
             posi_cor = True
         else:
             posi_cor = False
+        logger.info('overlap: {}, positive_correlation: {}'.format(overlap,posi_cor))
         return overlap,posi_cor
