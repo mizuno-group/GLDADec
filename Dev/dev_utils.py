@@ -334,26 +334,26 @@ def estimation_var(total_res,cell='Neutrophil',dpi=100):
     plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False,dpi=dpi)
 
 
-def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names = ["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True, dpi=100):
+def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,25,139,89]],names=["+PBS","+Nefopam","+Ketoprofen","+Cefotaxime"],value="ALT (U/I)",title="",grey=True,dpi=100,figsize=(12,6),lw=1,capthick=1,capsize=5):
     sns.set()
     sns.set_style('whitegrid')
     if grey:
         sns.set_palette('gist_yarg')
         
-    fig,ax = plt.subplots(figsize=(12,6),dpi=dpi)
+    fig,ax = plt.subplots(figsize=figsize,dpi=dpi)
     
     df = pd.DataFrame()
     for i in range(len(data)):
         tmp_df = pd.DataFrame({names[i]:data[i]})
         df = pd.concat([df,tmp_df],axis=1)
-    error_bar_set = dict(lw=1,capthick=1,capsize=5)
+    error_bar_set = dict(lw=lw,capthick=capthick,capsize=capsize)
     if grey:
         ax.bar([i for i in range(len(data))],df.mean(),yerr=df.std(),tick_label=df.columns,error_kw=error_bar_set)
     else:
         ax.bar([i for i in range(len(data))],df.mean(),yerr=df.std(),tick_label=df.columns,error_kw=error_bar_set)
     # jitter plot
     df_melt = pd.melt(df)
-    sns.stripplot(x='variable', y='value', data=df_melt, jitter=True, color='black', ax = ax, size=3)
+    sns.stripplot(x='variable', y='value', data=df_melt, jitter=True, color='black', ax=ax, size=3)
         
     ax.set_xlabel('')
     ax.set_ylabel(value)
