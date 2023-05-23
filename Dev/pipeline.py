@@ -23,6 +23,7 @@ Base_dir = '/workspace/github/GLDADec' # cloning repository
 import sys
 sys.path.append(Base_dir)
 from Dev import dev_utils
+from Dev import dev0_preprocessing
 from Dev import dev1_set_data
 from Dev import dev2_anchor_detection
 from Dev import dev3_deconvolution
@@ -39,6 +40,19 @@ class Pipeline():
         self.marker_dic = None
         self.verbose=verbose
     
+    def from_predata(self,mix_raw,ann_ref=None,batch_info=None,target_samples=['Ctrl','APAP'],
+                    do_ann=True,do_log2=False,do_drop=True,do_batch_norm=True,do_quantile=True):
+        """
+        You can skip below 1.set_data() and 2.sample_selection()
+        """
+        PP = dev0_preprocessing.PreProcessing()
+        PP.set_data(mix_raw=mix_raw,ann_ref=ann_ref,batch_info=batch_info)
+        PP.sample_selection(target_samples=target_samples)
+        PP.preprocessing(do_ann=do_ann,do_log2=do_log2,do_drop=do_drop,do_batch_norm=do_batch_norm,do_quantile=do_quantile)
+        target_df = PP.target_df
+        target_df.index = [t.upper() for t in target_df.index.tolist()]
+        self.target_df = target_df
+
     def set_data(self,df,marker_dic:dict):
         df.index = [t.upper() for t in df.index.tolist()]
         upper_v = []
@@ -52,13 +66,16 @@ class Pipeline():
         """
         Ctrl vs one administration group
         """
-        samples = self.df.columns.tolist()
-        use_samples = []
-        for t in samples:
-            if t.split('_')[0] in target_samples:
-                use_samples.append(t)
-            else:
-                pass
+        if len(target_samples)==0:
+            use_samples = self.df.columns.tolist()
+        else:
+            samples = self.df.columns.tolist()
+            use_samples = []
+            for t in samples:
+                if t.split('_')[0] in target_samples:
+                    use_samples.append(t)
+                else:
+                    pass
         self.target_df = self.df[use_samples]
         logger.info('n_samples: {}'.format(len(use_samples)))
     
@@ -80,8 +97,15 @@ class Pipeline():
             raise ValueError('!! set other method !!')
         logger.info('method: {}, n_top: {}'.format(method,topn))
     
-    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer']):
-        marker_dic = self.marker_dic
+    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer'],add_dic=None):
+        if add_dic is None:
+            marker_dic = self.marker_dic
+        else:
+            upper_v = []
+            for i,k in enumerate(add_dic):
+                upper_v.append([t.upper() for t in add_dic.get(k)])
+            marker_dic = dict(zip(list(add_dic.keys()), upper_v))
+            
         if len(target_cells)==0:
             target_cells = list(marker_dic.keys())
         target_v = []
@@ -91,7 +115,7 @@ class Pipeline():
 
         # gene definition
         marker_genes = list(itertools.chain.from_iterable(list(self.target_dic.values()))) # marker genes
-        common_marker = sorted(list(set(marker_genes) & set(self.df.index.tolist()))) # marker genes that are registered
+        common_marker = sorted(list(set(marker_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
         target_genes = sorted(list(set(common_marker) | set(self.high_genes))) # 500 + 189
 
         self.target_linear = self.target_df.loc[target_genes]
