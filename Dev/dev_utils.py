@@ -13,6 +13,9 @@ from scipy import stats
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 
+from logging import getLogger
+logger = getLogger('dev_utils')
+
 def standardz_sample(x):
     pop_mean = x.mean(axis=0)
     pop_std = x.std(axis=0)
@@ -36,7 +39,15 @@ def plot_simple_corr(deconv_df,val_df,dec_name=['B cells naive'],val_name=['Naiv
     Donor_4 -0.479019 -0.005198 -0.675028  -0.787741  0.343481    -0.062349
     
     """
-    total_cor = round(np.corrcoef(deconv_df[dec_name].sum(axis=1).tolist(),val_df[val_name].sum(axis=1).tolist())[0][1],4)
+    total_x = deconv_df[dec_name].sum(axis=1).tolist()
+    total_y = val_df[val_name].sum(axis=1).tolist()
+    total_cor, pvalue = stats.pearsonr(total_x,total_y) # correlation and pvalue
+    total_cor = round(total_cor,4)
+    if pvalue < 0.01:
+        pvalue = '{:.2e}'.format(pvalue)
+    else:
+        pvalue = round(pvalue,3)
+    rmse = round(np.sqrt(mean_squared_error(total_x, total_y)),4)
     
     if do_print:
         print(str(dec_name)+" vs "+str(val_name))
@@ -54,7 +65,9 @@ def plot_simple_corr(deconv_df,val_df,dec_name=['B cells naive'],val_name=['Naiv
         fig,ax = plt.subplots(figsize=(6,6),dpi=dpi)
         plt.scatter(res1,res2,label=label,alpha=1.0)
         plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
-        plt.text(0.3,0.05,'Cor = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
         
         plt.legend(shadow=True)
         plt.xlabel("Deconvolution estimated value")

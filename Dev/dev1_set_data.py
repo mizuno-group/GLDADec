@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from Dev.gldadec import utils
+
 class SetData():
     def __init__(self,verbose=True):
         self.verbose = verbose
@@ -136,7 +138,7 @@ class SetData():
         """
         self.random_sets = random_sets
     
-    def expression_processing(self,random_genes=None,random_n=0,specific=True,random_s=None):
+    def expression_processing(self,random_genes=None,random_n=0,specific=True,random_s=None,prior_norm=True,norm_scale=1000):
         """
         1. Determine if the markers are cell specific.
         2. Add non-marker gene at random.
@@ -157,7 +159,6 @@ class SetData():
             self.marker_final_dic = self.marker_dic
         
         genes = list(itertools.chain.from_iterable(list(self.marker_final_dic.values()))) # marker genes
-        print(len(genes))
         
         raw_df = copy.deepcopy(self.raw_df)
         if random_s is None:
@@ -173,7 +174,15 @@ class SetData():
         
         union = sorted(list(set(random_genes) | set(genes)))
         common = sorted(list(set(raw_df.index.tolist()) & set(union))) # fix the output gene order
-        final_df = raw_df.loc[common]
+        target_df = raw_df.loc[common]
+
+        # prior information normalization
+        if prior_norm:
+            linear_norm = utils.freq_norm(target_df,self.marker_final_dic)
+            linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
+            final_df = linear_norm/norm_scale
+        else:
+            final_df = target_df/norm_scale
         self.final_int = final_df.astype(int) # convert int
         self.input_mat = np.array(self.final_int.T,dtype='int64')
 
