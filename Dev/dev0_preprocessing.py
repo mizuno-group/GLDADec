@@ -48,18 +48,26 @@ class PreProcessing():
         logger.info('sample selection: {}'.format(self.target_df.shape))
 
             
-    def preprocessing(self,do_ann=True,do_log2=False,do_drop=True,do_batch_norm=True,do_quantile=True):
+    def preprocessing(self,do_ann=True,linear2log=False,log2linear=False,do_drop=True,do_batch_norm=True,do_quantile=True):
         # annotation
         if do_ann:
             self.target_df = processing.annotation(self.target_df, self.ann_ref)
             logger.info('annotation: {}'.format(self.target_df.shape))
         else:
             pass
-        # log2
-        if do_log2:
+        # linear --> log2
+        if linear2log:
             df_c = copy.deepcopy(self.target_df)
             self.target_df = processing.log2(df_c)
-            logger.info('log2: {}'.format(self.target_df.shape))
+            logger.info('linear2log: {}'.format(self.target_df.shape))
+        else:
+            pass
+        # log2 --> linear
+        if log2linear:
+            df_c = copy.deepcopy(self.target_df)
+            fxn = lambda x : 2**x
+            self.target_df = df_c.applymap(fxn)
+            logger.info('log2linear: {}'.format(self.target_df.shape))
         else:
             pass
         # trimming

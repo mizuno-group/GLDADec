@@ -38,17 +38,18 @@ class Pipeline():
     def __init__(self,verbose=False):
         self.df = None
         self.marker_dic = None
-        self.verbose=verbose
+        self.verbose = verbose
+        self.mm_df = None
     
     def from_predata(self,mix_raw,ann_ref=None,batch_info=None,target_samples=['Ctrl','APAP'],
-                    do_ann=True,do_log2=False,do_drop=True,do_batch_norm=True,do_quantile=True):
+                    do_ann=True,log2linear=False,linear2log=False,do_drop=True,do_batch_norm=True,do_quantile=True):
         """
         You can skip below 1.set_data() and 2.sample_selection()
         """
         PP = dev0_preprocessing.PreProcessing()
         PP.set_data(mix_raw=mix_raw,ann_ref=ann_ref,batch_info=batch_info)
         PP.sample_selection(target_samples=target_samples)
-        PP.preprocessing(do_ann=do_ann,do_log2=do_log2,do_drop=do_drop,do_batch_norm=do_batch_norm,do_quantile=do_quantile)
+        PP.preprocessing(do_ann=do_ann,log2linear=log2linear,linear2log=linear2log,do_drop=do_drop,do_batch_norm=do_batch_norm,do_quantile=do_quantile)
         target_df = PP.target_df
         target_df.index = [t.upper() for t in target_df.index.tolist()]
         self.target_df = target_df
@@ -118,29 +119,33 @@ class Pipeline():
         common_marker = sorted(list(set(marker_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
         target_genes = sorted(list(set(common_marker) | set(self.high_genes))) # 500 + 189
 
-        self.target_linear = self.target_df.loc[target_genes]
+        self.added_df = self.target_df.loc[target_genes]
 
         # other genes
-        self.other_genes = sorted(list(set(self.target_linear.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
+        self.other_genes = sorted(list(set(self.added_df.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
         logger.info('target_cells: {}, n_genes: {}'.format(target_cells,len(target_genes)))
-    
+
+    # FIXME: below 'prior_info_norm' method is included in 'deconv_prep' method.
     def prior_info_norm(self,scale=1000,norm=True):
+        """
+        Allowing duplication of marker genes does not work well.
+        """
         if norm:
-            linear_norm = utils.freq_norm(self.target_linear,self.target_dic)
+            linear_norm = utils.freq_norm(self.added_df,self.target_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             self.deconv_df = linear_norm/scale
         else:
-            self.deconv_df = self.target_linear
+            self.deconv_df = self.added_df/scale
         logger.info('prior_norm: {}'.format(norm))
     
-    def deocnv_prep(self,random_sets:list,do_plot=True,specific=True,scale=10):
+    def deocnv_prep(self,random_sets:list,do_plot=True,specific=True,prior_norm=True,norm_scale=1000,minmax=True,mm_scale=10):
         # dev1
         SD = dev1_set_data.SetData(verbose=self.verbose)
-        SD.set_expression(df=self.deconv_df) 
+        SD.set_expression(df=self.added_df) 
         SD.set_marker(marker_dic=self.target_dic)
         SD.marker_info_processing(do_plot=do_plot)
         SD.set_random(random_sets=random_sets)
-        SD.expression_processing(random_genes=self.other_genes,random_n=0,specific=specific)
+        SD.expression_processing(random_genes=self.other_genes,random_n=0,specific=specific,prior_norm=prior_norm,norm_scale=norm_scale)
         SD.seed_processing()
 
         # Collect data to be used in later analyses
@@ -154,28 +159,32 @@ class Pipeline():
             cor = self.final_int.corr()
             sns.heatmap(cor)
             plt.show()
-
-        # Sample-wide normalization
-        mm_scaler = MinMaxScaler()
-        self.mm_df = (pd.DataFrame(mm_scaler.fit_transform(self.final_int.T),index=self.final_int.T.index, columns=self.final_int.T.columns)*scale).T
-
-        # correlation between samples
-        if do_plot:
-            cor = self.mm_df.corr()
-            sns.heatmap(cor)
-            plt.show()
-        logger.info('minmax_scaling: {}'.format(scale))
+        if minmax:
+            # Sample-wide normalization
+            mm_scaler = MinMaxScaler()
+            self.mm_df = (pd.DataFrame(mm_scaler.fit_transform(self.final_int.T),index=self.final_int.T.index, columns=self.final_int.T.columns)*mm_scale).T
+            # correlation between samples
+            if do_plot:
+                cor = self.mm_df.corr()
+                sns.heatmap(cor)
+                plt.show()
+            logger.info('minmax_scaling: {}'.format(scale))
+        else:
+            pass
     
     def deconv(self,n=100,add_topic=0,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=True):
-        original_order = sorted(self.mm_df.index.tolist())
+        if self.mm_df is None:
+            deconv_df = self.final_int
+        else:
+            deconv_df = self.mm_df
+        original_order = sorted(deconv_df.index.tolist())
         merge_total_res = []
         gene_contribution_res = []
         final_ll_list = []
         for i in tqdm(range(n)):
             random.seed(i+1)
             re_order = random.sample(original_order,len(original_order)) # randomly sort the gene order
-
-            mm_target = self.mm_df.loc[re_order]
+            mm_target = deconv_df.loc[re_order]
             # conduct deconvolution
             # dev3
             Dec = dev3_deconvolution.Deconvolution(verbose=False)
@@ -225,7 +234,7 @@ class Pipeline():
             
     def evaluate(self,facs_df=None,deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
     res_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
-    ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],dpi=50):
+    ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],dpi=50,multi=True):
         """
         ----------
         ref_df : pd.DataFrame
@@ -256,7 +265,10 @@ class Pipeline():
         Eval.set_res(total_res=norm_res,z_norm=False)
         Eval.set_ref(ref_df=norm_facs,z_norm=False)
         self.ensemble_res = Eval.ensemble_res
-        Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,dpi=dpi) # visualization
+        if multi:
+            Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,dpi=dpi) # visualization
+        else:
+            Eval.multi_eval(res_names=res_names,ref_names=ref_names,dpi=dpi)
 
         self.cor_dic = Eval.cor_dic
         pprint.pprint(self.cor_dic)
