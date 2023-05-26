@@ -168,7 +168,7 @@ class Pipeline():
                 cor = self.mm_df.corr()
                 sns.heatmap(cor)
                 plt.show()
-            logger.info('minmax_scaling: {}'.format(scale))
+            logger.info('minmax_scaling: {}'.format(mm_scale))
         else:
             pass
     

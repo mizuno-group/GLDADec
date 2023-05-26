@@ -169,3 +169,16 @@ for i,k in enumerate(liver_all_dic):
 final_dic = dict(zip(final_k,final_v))
 # save
 pd.to_pickle(final_dic,'/workspace/github/GLDADec/data/mouse_liver_injury/230511/liver_merged_35_dic.pkl')
+
+#%% liver immune
+liver_dic = pd.read_pickle('/workspace/github/GLDADec/data/mouse_liver_injury/230511/liver_merged_35_dic.pkl')
+print(liver_dic.keys())
+"""
+[ 'Hepatocyte',  'Hepatoblast', 'Stem cell',   'Hepatic stellate cell', 'Bile duct cell',  'Vascular endothelial cell', 'Megakaryocyte', 'Mast cell', 'Erythroblast', 'Artery cell', 'Early erythrocyte', 'Portal vein cell',  'Megakaryocyte progenitor cell', 'Microglial cell',  'Fibroblast',  'Liver sinusoid endothelial cell(LSECs)', 'Macrovascular endothelial cell (MaVECs)', 'Vascular smooth muscle cell(VSMC)']
+"""
+liver_immune = ['CD4+ T cell','Dendritic cell','Kupffer cell', 'Natural killer cell','B cell', 'Monocyte', 'Regulatory T (Treg) cell','Monocyte-derived macrophage', 'Neutrophil', 'Macrophage', 'Resident memory CD8+ T cell','Basophil','Innate lymphoid cell 1','Naive T(Th0) cell', 'Effector memory T cell', 'Memory T cell', 'Natural killer T(NKT) cell']
+immune_markers = []
+for immune in liver_immune:
+    immune_markers.append(liver_dic.get(immune))
+liver_immune_dic = dict(zip(liver_immune,immune_markers))
+pd.to_pickle(liver_immune_dic,'/workspace/github/GLDADec/data/mouse_liver_injury/230511/liver_immune_17_from_35_dic.pkl')
