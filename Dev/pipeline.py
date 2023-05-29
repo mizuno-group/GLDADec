@@ -13,6 +13,7 @@ import random
 import pprint
 import logging
 import itertools
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from tqdm.auto import tqdm
@@ -29,6 +30,7 @@ from Dev import dev2_anchor_detection
 from Dev import dev3_deconvolution
 from Dev import dev4_evaluation
 from Dev.gldadec import utils
+from Dev import processing
 
 #%%
 logger = logging.getLogger('pipeline')
@@ -46,6 +48,7 @@ class Pipeline():
         """
         You can skip below 1.set_data() and 2.sample_selection()
         """
+        # TODO: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
         PP = dev0_preprocessing.PreProcessing()
         PP.set_data(mix_raw=mix_raw,ann_ref=ann_ref,batch_info=batch_info)
         PP.sample_selection(target_samples=target_samples)
@@ -80,12 +83,25 @@ class Pipeline():
         self.target_df = self.df[use_samples]
         logger.info('n_samples: {}'.format(len(use_samples)))
     
-    def gene_selection(self,method='CV',topn=500):
+    def gene_selection(self,method='CV',outlier=True,topn=500):
         """
         select target genes other than marker genes
         """
         target_df = copy.deepcopy(self.target_df)
         if method=='CV':
+            if outlier:
+                PP = dev0_preprocessing.PreProcessing()
+                log_df = processing.log2(target_df)
+                common = set(log_df.index.tolist())
+                for sample in log_df.columns.tolist():
+                    log_sample = log_df[sample].replace(0,np.nan).dropna()
+                    mu = log_sample.mean()
+                    sigma = log_sample.std()
+                    df3 = log_sample[(mu - 2*sigma <= log_sample) & (log_sample <= mu + 2*sigma)]
+                    common = common & set(df3.index.tolist())
+                target_df = target_df.loc[sorted(list(common))]
+            else:
+                pass
             var_df = pd.DataFrame(target_df.T.var())
             mean_df = pd.DataFrame(target_df.T.mean())
             cv_df = var_df/mean_df # coefficient of variance
@@ -96,7 +112,7 @@ class Pipeline():
             self.high_df = cv_df.loc[self.high_genes]
         else:
             raise ValueError('!! set other method !!')
-        logger.info('method: {}, n_top: {}'.format(method,topn))
+        logger.info('method: {}, outlier:{}, n_top: {}'.format(method,outlier,topn))
     
     def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer'],add_dic=None):
         if add_dic is None:
