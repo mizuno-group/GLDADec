@@ -14,6 +14,8 @@ from tqdm import tqdm
 from combat.pycombat import pycombat
 import matplotlib.pyplot as plt
 
+
+
 def annotation(df,ref_df, places:list=[0, 1]):
     """
     annotate row IDs to gene names
@@ -255,7 +257,6 @@ def log2(df):
     f_add = lambda x: x+1
     log_df = df.apply(f_add)
     log_df = np.log2(log_df)
-    
     return log_df
 
 def low_cut(df,threshold=1.0):
