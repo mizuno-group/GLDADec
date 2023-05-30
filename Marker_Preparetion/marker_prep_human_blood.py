@@ -100,3 +100,44 @@ domain_dic = dict(zip(k,v))
 pd.to_pickle(domain_dic,'/workspace/github/GLDADec/data/GSE107572/domain/gse107572_domain_dic.pkl')
 
 #%% GSE60424
+pre_domain_dic = pd.read_pickle('/workspace/github/GLDADec/data/GSE65133/domain/gse65133_domain_dic.pkl') # defined above section
+cellmarker_dic = pd.read_pickle('/workspace/github/GLDADec/data/GSE107572/CellMarker/human_PBMC_CellMarker_8cell_raw_dic_230307.pkl')
+
+# B cells
+bcandi = []
+bcandi.extend(pre_domain_dic.get('B cells memory'))
+bcandi.extend(pre_domain_dic.get('B cells naive'))
+
+# CD4 cells
+cd4candi = []
+cd4candi.extend(pre_domain_dic.get('T cells CD4 memory'))
+cd4candi.extend(pre_domain_dic.get('T cells CD4 naive'))
+
+# CD8 cels
+cd8candi = pre_domain_dic.get('T cells CD8')
+
+# NK cells
+nkcandi = pre_domain_dic.get('NK cells')
+
+# Lymphocyte
+lymcandi = []
+lymcandi.extend(bcandi)
+lymcandi.extend(cd4candi)
+lymcandi.extend(cd8candi)
+lymcandi.extend(nkcandi)
+
+# Monocytes
+moncandi = pre_domain_dic.get('Monocytes')
+
+# Neutrophils
+neucandi = cellmarker_dic.get('Neutrophils')
+neu_facs= ['CCR7','CD14','CD177','CD24','CD47','CD63','CD86','CXCR1','CXCR2','CXCR4','FCGR3A','FLT1','ICAM1','IL17RA',
+           'ITGA4','ITGAM','ITGAX','ITGB2','PECAM1','PTPRC','SELL','SPN','TLR2','TLR4','TLR5','TLR7','TLR8','TLR9'] # (biocompare)
+neucandi = sorted(list(set(neucandi) & set(neu_facs)))
+
+# generate original marker dict
+k = ['Lymphocytes','Monocytes','Neutrophils']
+v = [lymcandi,moncandi,neucandi]
+domain_dic = dict(zip(k,v))
+
+pd.to_pickle(domain_dic,'/workspace/github/GLDADec/data/GSE60424/domain/gse60424_domain_dic.pkl')
