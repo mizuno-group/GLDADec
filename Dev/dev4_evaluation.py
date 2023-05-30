@@ -67,12 +67,12 @@ class Evaluation():
         #print("samples of ref",self.ref_df.index.tolist())
         print('cells in ref :',self.ref_df.columns.tolist())
     
-    def evaluate(self,res_name=['B cells naive'],ref_name=['Naive B'],dpi=100):
+    def evaluate(self,res_name=['B cells naive'],ref_name=['Naive B'],dpi=100,plot_size=50):
         # ecaluate each cell
         try:
             a = dev_utils.plot_simple_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
                                            dec_name=res_name,val_name=ref_name,
-                                           do_plot=True,sep=True,dpi=dpi)
+                                           do_plot=True,sep=True,dpi=dpi,plot_size=plot_size)
             cor = a[-1]
             return cor
         except:
@@ -116,7 +116,7 @@ class Evaluation():
         try:
             a = dev_utils.plot_group_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
                                            dec_name=res_name,val_name=ref_name,
-                                           do_plot=True,sep=True,dpi=dpi)
+                                           do_plot=True,sep=True,dpi=dpi,plot_size=plot_size)
             cor = a[-1]
             return cor
         except:
@@ -124,12 +124,12 @@ class Evaluation():
     
     def multi_eval(self,
                    res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],dpi=100):
+                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],dpi=100,plot_size=50):
         cor_list = []
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
-            cor = self.evaluate(res_name=res_name,ref_name=ref_name,dpi=dpi)
+            cor = self.evaluate(res_name=res_name,ref_name=ref_name,dpi=dpi,plot_size=plot_size)
             cor_list.append(cor)
         
         new_k = [t[0] for t in res_names]
@@ -182,7 +182,7 @@ class Evaluation():
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
-            cor = self.evaluate_multi_group(res_name=res_name,ref_name=ref_name,dpi=dpi)
+            cor = self.evaluate_multi_group(res_name=res_name,ref_name=ref_name,dpi=dpi,plot_size=plot_size)
             cor_list.append(cor)
         
         new_k = [t[0] for t in res_names]

@@ -250,7 +250,7 @@ class Pipeline():
             
     def evaluate(self,facs_df=None,deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
     res_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
-    ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],dpi=50,multi=True):
+    ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],dpi=50,plot_size=100,multi=True):
         """
         ----------
         ref_df : pd.DataFrame
@@ -282,9 +282,9 @@ class Pipeline():
         Eval.set_ref(ref_df=norm_facs,z_norm=False)
         self.ensemble_res = Eval.ensemble_res
         if multi:
-            Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,dpi=dpi) # visualization
+            Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,dpi=dpi,plot_size=plot_size) # visualization
         else:
-            Eval.multi_eval(res_names=res_names,ref_names=ref_names,dpi=dpi)
+            Eval.multi_eval(res_names=res_names,ref_names=ref_names,dpi=dpi,plot_size=plot_size)
 
         self.cor_dic = Eval.cor_dic
         pprint.pprint(self.cor_dic)

@@ -26,7 +26,7 @@ def standardz_sample(x):
     #print('standardz population control')
     return df
 
-def plot_simple_corr(deconv_df,val_df,dec_name=['B cells naive'],val_name=['Naive B'],do_plot=True,sep=True,do_print=False,dpi=300):
+def plot_simple_corr(deconv_df,val_df,dec_name=['B cells naive'],val_name=['Naive B'],do_plot=True,sep=True,do_print=False,dpi=300,plot_size=50):
     """
     Correlation Scatter Plotting
     Format of both input dataframe is as follows
@@ -63,7 +63,7 @@ def plot_simple_corr(deconv_df,val_df,dec_name=['B cells naive'],val_name=['Naiv
     
     if do_plot:
         fig,ax = plt.subplots(figsize=(6,6),dpi=dpi)
-        plt.scatter(res1,res2,label=label,alpha=1.0)
+        plt.scatter(res1,res2,label=label,alpha=1.0,s=plot_size)
         plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
         plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
         plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
@@ -85,7 +85,7 @@ def plot_simple_corr(deconv_df,val_df,dec_name=['B cells naive'],val_name=['Naiv
     return total_cor,res1,res2,label
 
 def plot_group_corr(deconv_df,val_df,dec_name=["CD4","CD8"],val_name=["abT"],sort_index=[],
-                    do_plot=True,sep=True,title=None,do_print=False,dpi=300):
+                    do_plot=True,sep=True,title=None,do_print=False,dpi=300,plot_size=50):
     """
     Correlation Scatter Plotting
     Format of both input dataframe is as follows
@@ -137,7 +137,7 @@ def plot_group_corr(deconv_df,val_df,dec_name=["CD4","CD8"],val_name=["abT"],sor
             res2 = tmp2[val_name].sum(axis=1).tolist()
             tmp_cor = round(np.corrcoef(res1,res2)[0][1],3)
         
-            plt.scatter(res1,res2,label=d+" : "+str(tmp_cor),alpha=1.0)
+            plt.scatter(res1,res2,label=d+" : "+str(tmp_cor),alpha=1.0,s=plot_size)
             
             xmin = min(min(res1),min(res2))
             if xmin < x_min:
