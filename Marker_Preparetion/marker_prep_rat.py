@@ -10,7 +10,6 @@ marker prep for rat
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 import sys
 sys.path.append('/workspace/github/LiverDeconv')
 import liver_deconv
@@ -62,7 +61,6 @@ df_CV = df_CV.dropna()
 df_CV=pd.DataFrame(df_CV)
 
 tmp_df = df_CV.loc[['CD8A','CD8B']]
-
 
 deg_dic = pd.read_pickle('/workspace/github/GLDADec/data/rat/marker/DEGs/rnaseq_50.pkl')
 deg_dic.get('CD8T')
