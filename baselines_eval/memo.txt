@@ -1,0 +1,32 @@
+■ CIBERSORT_GSE65133_LM22_Results.csv
+We processed at [https://cibersortx.stanford.edu/runcibersortx.php] on 230605.
+- '/workspace/github/GLDADec/data/expression/GSE65133/GSE65133_expression.csv' was converted to tsv format and upload as mixture file.
+- 'LM22 (22 immune cell types) was selected as signature matrix'
+- Default parameters were used.
+
+■ DCQ_GSE65133_LM22_Results.csv
+'''
+library(ADAPTS)
+file_mix = '/workspace/github/GLDADec/data/expression/GSE65133/GSE65133_expression.csv'
+file_ref = '/workspace/github/GLDADec/data/expression/GSE65133/lm22_signature.csv'
+df_mix = read.csv(file_mix,row.names = 1)
+df_ref = read.csv(file_ref,row.names = 1)
+results <- estCellPercent.DCQ(refExpr=df_ref, geneExpr=df_mix)
+'''
+- 'LM22 (22 immune cell types) was selected as signature matrix'
+- Default parameters were used.
+
+■ EPIC_GSE65133_LM22_Results.csv
+We processed at https://epic.gfellerlab.org/ on 230606.
+- '/workspace/github/GLDADec/data/expression/GSE65133/GSE65133_expression.csv' was converted to tsv format and upload as mixture file.
+- 'LM22 (22 immune cell types) was selected as signature matrix'
+
+■ FARDEEP_GSE65133_LM22_Results.csv
+'''
+library(FARDEEP)
+results = fardeep(df_ref, df_mix)
+coef = results$abs.beta
+coef_df <- data.frame(coef)
+'''
+- 'LM22 (22 immune cell types) was selected as signature matrix'
+- Default parameters were used.

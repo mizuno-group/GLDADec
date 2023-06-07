@@ -21,8 +21,6 @@ logger = logging.getLogger('glda_deconv')
 
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
-print(BASE_DIR)
-print("!! GuidedLDA Decovnolution Multiple Seed !!")
 
 class GLDADeconvMS():
     """Guided Latent Dirichlet allocation using collapsed Gibbs sampling

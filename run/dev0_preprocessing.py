@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
-print(BASE_DIR)
 
 from run import processing
 

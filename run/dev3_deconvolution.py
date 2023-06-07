@@ -16,9 +16,6 @@ import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
-print(BASE_DIR)
-
-sys.path.append(BASE_DIR)
 
 from gldadec import glda_deconv
 

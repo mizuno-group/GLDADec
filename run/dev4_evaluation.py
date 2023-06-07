@@ -7,15 +7,14 @@ Created on Tue Dec 27 13:13:14 2022
 """
 import pandas as pd
 from matplotlib import colors as mcolors
+tab_colors = mcolors.TABLEAU_COLORS
 
 import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
-print(BASE_DIR)
 
-sys.path.append(BASE_DIR)
-#pprint.pprint(sys.path)
-from run import dev_utils
+from _utils import plot_utils
+from run import processing
 
 class Evaluation():
     def __init__(self):
@@ -26,7 +25,7 @@ class Evaluation():
         if z_norm:
             self.total_res = []
             for res in total_res:
-                z_res = dev_utils.standardz_sample(res) # sample wide normalization
+                z_res = processing.standardz_sample(res) # sample wide normalization
                 # print(z_res.sum())
                 self.total_res.append(z_res)
         else:
@@ -37,10 +36,10 @@ class Evaluation():
         # ensemble
         sum_res = sum(self.total_res) / len(total_res)
         if z_norm:
-            self.ensemble_res = dev_utils.standardz_sample(sum_res) # sample-wide
+            self.ensemble_res = processing.standardz_sample(sum_res) # sample-wide
         else:
             self.ensemble_res = sum_res
-        print('cells in res :',self.ensemble_res.columns.tolist())
+        print('cells in res :',self.ensemble_res.columns.tolist()) # TODO : add logging
         
     def set_ref(self,ref_df,z_norm=True):
         """
@@ -58,122 +57,33 @@ class Evaluation():
         
         """
         if z_norm:
-            z_ref = dev_utils.standardz_sample(ref_df) # sample wide normalization
+            z_ref = processing.standardz_sample(ref_df) # sample wide normalization
             z_ref = z_ref.loc[self.samples]
             self.ref_df = z_ref
         else:
             ref_df = ref_df.loc[self.samples]
             self.ref_df = ref_df
         #print("samples of ref",self.ref_df.index.tolist())
-        print('cells in ref :',self.ref_df.columns.tolist())
+        print('cells in ref :',self.ref_df.columns.tolist()) # TODO : add logging
     
-    def evaluate(self,res_name=['B cells naive'],ref_name=['Naive B'],dpi=100,plot_size=50):
-        # ecaluate each cell
-        try:
-            a = dev_utils.plot_simple_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
-                                           dec_name=res_name,val_name=ref_name,
-                                           do_plot=True,sep=True,dpi=dpi,plot_size=plot_size)
-            cor = a[-1]
-            return cor
-        except:
-            raise ValueError('res_name or ref_name is not correct')
-    
-    def evaluate_with_var(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100):
-        # ecaluate each cell
-        try:
-            a = dev_utils.plot_cor_var(total_res=self.total_res,val_df=self.ref_df,
-                                       dec_name=res_name,val_name=ref_name,
-                                       do_plot=True,sep=True,do_print=False,plot_size=plot_size,dpi=100)
-            cor = a[-1]
-            return cor
-        except:
-            raise ValueError('res_name or ref_name is not correct')
-    
-    def evaluate_with_error(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_all=False):
-        # ecaluate each cell
-        try:
-            a = dev_utils.plot_cor_error(total_res=self.total_res,val_df=self.ref_df,
-                                       dec_name=res_name,val_name=ref_name,
-                                       do_plot=True,sep=True,do_print=False,plot_all=plot_all,dpi=100)
-            cor = a[-1]
-            return cor
-        except:
-            raise ValueError('res_name or ref_name is not correct')
-    
-    def evaluate_with_publication(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100,color="tab:blue"):
-        # ecaluate each cell
-        try:
-            a = dev_utils.plot_cor_publication(total_res=self.total_res,val_df=self.ref_df,
-                                       dec_name=res_name,val_name=ref_name,
-                                       do_plot=True,sep=True,do_print=False,plot_size=plot_size,dpi=300,color=color)
-            cor = a[-1]
-            return cor
-        except:
-            raise ValueError('res_name or ref_name is not correct')
-    
-    def evaluate_multi_group(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100,dpi=100):
-        # ecaluate each cell
-        try:
-            a = dev_utils.plot_group_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
-                                           dec_name=res_name,val_name=ref_name,
-                                           do_plot=True,sep=True,dpi=dpi,plot_size=plot_size)
-            cor = a[-1]
-            return cor
-        except:
-            raise ValueError('res_name or ref_name is not correct')
-    
+    #%% main
     def multi_eval(self,
                    res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],dpi=100,plot_size=50):
-        cor_list = []
+                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],
+                   title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],figsize=(6,6),dpi=100,plot_size=100):
+        color_list = list(tab_colors.keys())
+        performance_list = []
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
-            cor = self.evaluate(res_name=res_name,ref_name=ref_name,dpi=dpi,plot_size=plot_size)
-            cor_list.append(cor)
+            color = color_list[i]
+            title = title_list[i]
+            dat = plot_utils.DeconvPlot(deconv_df=self.ensemble_res,val_df=self.ref_df,dec_name=res_name,val_name=ref_name,figsize=figsize,dpi=dpi,plot_size=plot_size)
+            a = dat.plot_simple_corr(color=color,title=title)
+            performance = a[0]
+            performance_list.append(list(performance.items()))
         
-        new_k = [t[0] for t in res_names]
-        self.cor_dic = dict(zip(new_k,cor_list))
-    
-    def multi_eval_var(self,
-                   res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],plot_size=100):
-        cor_list = []
-        for i in range(len(res_names)):
-            res_name = res_names[i]
-            ref_name = ref_names[i]
-            cor = self.evaluate_with_var(res_name=res_name,ref_name=ref_name,plot_size=plot_size)
-            cor_list.append(cor)
-        
-        new_k = [t[0] for t in res_names]
-        self.cor_dic = dict(zip(new_k,cor_list))
-    
-    def multi_eval_error(self,
-                   res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],plot_all=False):
-        cor_list = []
-        for i in range(len(res_names)):
-            res_name = res_names[i]
-            ref_name = ref_names[i]
-            cor = self.evaluate_with_error(res_name=res_name,ref_name=ref_name,plot_all=plot_all)
-            cor_list.append(cor)
-        
-        new_k = [t[0] for t in res_names]
-        self.cor_dic = dict(zip(new_k,cor_list))
-    
-    def multi_eval_publication(self,
-                   res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                   ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],plot_size=100):
-        cor_list = []
-        cmap = list(mcolors.TABLEAU_COLORS.keys())
-        for i in range(len(res_names)):
-            res_name = res_names[i]
-            ref_name = ref_names[i]
-            cor = self.evaluate_with_publication(res_name=res_name,ref_name=ref_name,plot_size=plot_size,color=cmap[i])
-            cor_list.append(cor)
-        
-        new_k = [t[0] for t in res_names]
-        self.cor_dic = dict(zip(new_k,cor_list))
+        self.performance_dic = dict(zip(title_list,performance_list))
     
     def multi_eval_multi_group(self,
                                res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
@@ -188,6 +98,16 @@ class Evaluation():
         new_k = [t[0] for t in res_names]
         self.cor_dic = dict(zip(new_k,cor_list))
     
+    def evaluate_multi_group(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100,dpi=100):
+        # ecaluate each cell
+        try:
+            a = plot_utils.plot_group_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
+                                           dec_name=res_name,val_name=ref_name,
+                                           do_plot=True,sep=True,dpi=dpi,plot_size=plot_size)
+            cor = a[-1]
+            return cor
+        except:
+            raise ValueError('res_name or ref_name is not correct')
         
 def main():
     target_facs = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/facs_results.csv',index_col=0)
