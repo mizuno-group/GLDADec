@@ -18,10 +18,6 @@ from sklearn import preprocessing
 import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
-print(BASE_DIR)
-
-sys.path.append(BASE_DIR)
-#pprint.pprint(sys.path)
 
 from gldadec import glda_deconv
 
