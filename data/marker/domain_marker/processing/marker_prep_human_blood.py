@@ -11,7 +11,7 @@ import pandas as pd
 
 #%% GSE65133
 # load dictionaries
-cellmarker_dic = pd.read_pickle('/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_specific_dic.pkl')
+cellmarker_dic = pd.read_pickle('/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_gse65133_specific_dic.pkl')
 
 #%%
 # Monocyte 
@@ -56,7 +56,7 @@ pd.to_pickle(domain_dic,'/workspace/github/GLDADec/data/marker/domain_marker/res
 
 #%% GSE107572
 pre_domain_dic = pd.read_pickle('/workspace/github/GLDADec/data/marker/domain_marker/results/gse65133_domain_dic.pkl') # defined above section
-cellmarker_dic = pd.read_pickle('/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_raw_dic.pkl')
+cellmarker_dic = pd.read_pickle('/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_gse107572_raw_dic.pkl')
 
 # B cells
 bcandi = []
