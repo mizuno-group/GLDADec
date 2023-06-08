@@ -76,5 +76,5 @@ cellmarker_dic = dict(zip(k,a))
 cellmarker_spe_dic = dict(zip(k,b))
 
 # %%
-pd.to_pickle(cellmarker_dic,'/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_raw_dic.pkl')
-pd.to_pickle(cellmarker_spe_dic,'/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_specific_dic.pkl')
+pd.to_pickle(cellmarker_dic,'/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_gse65133_raw_dic.pkl')
+pd.to_pickle(cellmarker_spe_dic,'/workspace/github/GLDADec/data/marker/domain_marker/results/CellMarker_gse65133_specific_dic.pkl')

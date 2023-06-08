@@ -65,7 +65,8 @@ class DeconvPlot():
         if self.do_plot:
             fig,ax = plt.subplots(figsize=self.figsize,dpi=self.dpi)
             plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color)
-            plt.plot([0,x_max],[0,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+            #plt.plot([0,x_max],[0,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+            plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
             plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
             plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
             plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
