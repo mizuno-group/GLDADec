@@ -13,8 +13,7 @@ import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
 
-from _utils import plot_utils
-from run import processing
+from _utils import plot_utils, processing
 
 class Evaluation():
     def __init__(self):

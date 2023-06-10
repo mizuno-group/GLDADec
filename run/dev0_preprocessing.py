@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 BASE_DIR = Path(__file__).parent
 
-from run import processing
+from _utils import processing
 
 from logging import getLogger
 logger = getLogger('dev0')
@@ -64,7 +64,7 @@ class PreProcessing():
         # log2 --> linear
         if log2linear:
             df_c = copy.deepcopy(self.target_df)
-            fxn = lambda x : 2**x
+            fxn = lambda x : 2**x if x < 30 else 1073741824 # FIXME: avoid overflow
             self.target_df = df_c.applymap(fxn)
             logger.info('log2linear: {}'.format(self.target_df.shape))
         else:
