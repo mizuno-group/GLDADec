@@ -30,7 +30,7 @@ from run import dev2_anchor_detection
 from run import dev3_deconvolution
 from run import dev4_evaluation
 from gldadec import utils
-from run import processing
+from _utils import processing
 
 #%%
 logger = logging.getLogger('pipeline')
@@ -187,6 +187,7 @@ class Pipeline():
             logger.info('minmax_scaling: {}'.format(mm_scale))
         else:
             pass
+        gc.collect()
     
     def deconv(self,n=100,add_topic=0,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=True):
         if self.mm_df is None:
@@ -247,6 +248,7 @@ class Pipeline():
                 except:
                     pass
         logger.info('n_ensemble: {}, n_add_topics: {}, n_iter: {}'.format(n,add_topic,n_iter))
+        gc.collect()
             
     def evaluate(self,facs_df=None,deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
     res_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],

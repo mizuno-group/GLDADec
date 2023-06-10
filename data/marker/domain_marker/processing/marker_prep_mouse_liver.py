@@ -16,7 +16,7 @@ Base_dir = '/workspace/github/GLDADec' # cloning repository
 
 #%%
 # load total data
-with codecs.open(Base_dir + '/data/domain_info/CellMarker/Cell_marker_All.csv', "r", "Shift-JIS", "ignore") as file:
+with codecs.open(Base_dir + '/data/marker/raw_info/CellMarker/Cell_marker_All.csv', "r", "Shift-JIS", "ignore") as file:
     total_ref = pd.read_table(file, delimiter=",")
 
 # mouse
@@ -25,7 +25,6 @@ tissues = mouse_ref['tissue_class'].unique().tolist()
 tmp = mouse_ref[mouse_ref['tissue_type']=='Peripheral blood']
 
 #%%
-#target_tissues = ['Blood','Blood vessel','Liver','Spleen']
 target_tissues = ['Liver']
 target_ref = mouse_ref[mouse_ref['tissue_class'].isin(target_tissues)]
 target_ref = target_ref[target_ref['cell_type']=='Normal cell']
