@@ -162,8 +162,8 @@ class DeconvPlot():
             
             #plt.legend(loc='upper center',shadow=True,fontsize=13,ncol=2,bbox_to_anchor=(.45, 1.12))
             plt.legend(loc="upper left", bbox_to_anchor=(0.95, 1),shadow=True,fontsize=13)
-            plt.xlabel("Deconvolution estimated value",fontsize=15)
-            plt.ylabel("Flow cytometry value",fontsize=15)
+            plt.xlabel(self.xlabel,fontsize=self.label_size)
+            plt.ylabel(self.ylabel,fontsize=self.label_size)
             plt.gca().spines['right'].set_visible(False)
             plt.gca().spines['top'].set_visible(False)
             plt.gca().yaxis.set_ticks_position('left')
@@ -175,6 +175,54 @@ class DeconvPlot():
         else:
             pass
         return total_x,total_y,total_cor
+    
+    def overlap_singles(self,evalxy, title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes']):
+        total_x = []
+        for t in evalxy[0]:
+            total_x.extend(t)
+        total_y = []
+        for t in evalxy[1]:
+            total_y.extend(t)
+        
+        total_cor, pvalue = stats.pearsonr(total_x,total_y) # correlation and pvalue
+        total_cor = round(total_cor,4)
+        if pvalue < 0.01:
+            pvalue = '{:.2e}'.format(pvalue)
+        else:
+            pvalue = round(pvalue,3)
+        rmse = round(np.sqrt(mean_squared_error(total_x, total_y)),4)
+        performance = {'R':total_cor,'P':pvalue,'RMSE':rmse}
+
+        x_min = min(min(total_x),min(total_y))
+        x_max = max(max(total_x),max(total_y))
+
+        fig,ax = plt.subplots(figsize=self.figsize,dpi=self.dpi)
+        for idx in range(len(evalxy[0])):
+            res1 = evalxy[0][idx]
+            res2 = evalxy[1][idx]
+            cell = title_list[idx]
+
+            plt.scatter(res1,res2,alpha=0.8,s=60,label=cell)
+            plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+
+        plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
+        #plt.legend(shadow=True)
+        plt.xlabel('Estimated Proportion',fontsize=12)
+        plt.ylabel('True Proportion',fontsize=12)
+        plt.xticks(fontsize=self.tick_size)
+        plt.yticks(fontsize=self.tick_size)
+
+        plt.gca().spines['right'].set_visible(False)
+        plt.gca().spines['top'].set_visible(False)
+        plt.gca().yaxis.set_ticks_position('left')
+        plt.gca().xaxis.set_ticks_position('bottom')
+        ax.set_axisbelow(True)
+        ax.grid(color="#ababab",linewidth=0.5)
+        #plt.title(title,fontsize=12)
+        plt.legend(shadow=True,bbox_to_anchor=(1.0, 1), loc='upper left')
+        plt.show()
 
     def estimation_var(total_res,cell='Neutrophil',dpi=100):
         summary_df = pd.DataFrame()
