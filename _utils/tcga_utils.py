@@ -75,6 +75,8 @@ class TCGA_Analysis():
         target_prognosis = target_prognosis.drop_duplicates(keep='first')
         target_prognosis = target_prognosis.drop('sample',axis=1)
 
+        self.concat_value_df = pd.concat([target_prognosis,self.deconv_res],axis=1)
+
         concat_df = pd.concat([target_prognosis,immune_binary],axis=1)
         concat_df = concat_df.dropna()
         # duration selection
@@ -101,6 +103,45 @@ class TCGA_Analysis():
         self.res_log = pd.DataFrame({'log-rank':[p_log],'wilcoxon':[p_wil]})
 
         plot_curves(self.concat_df,target=[cell])
+    
+    def calc_top_bottom(self,cell='Macrophage'):
+        concat_value_df = self.concat_value_df.dropna()
+        cell_value = sorted(concat_value_df[cell].tolist())
+        lower_threshold = cell_value[len(concat_value_df)//5]
+        upper_threshold = cell_value[-(len(concat_value_df)//5)]
+
+        def convert(x):
+            if x > upper_threshold:
+                return 1
+            elif x < lower_threshold:
+                return 0
+            else:
+                return np.nan
+        fxn = lambda x : convert(x)
+
+        concat_value_df[cell] = concat_value_df[cell].apply(fxn)
+        concat_value_df = concat_value_df.dropna()
+
+        df1 = concat_value_df[concat_value_df[cell]==1]
+        df0 = concat_value_df[concat_value_df[cell]==0]
+
+        logger.info('positive samples: {}'.format(len(df1)))
+        logger.info('negative samples: {}'.format(len(df0)))
+
+        if min(len(df1),len(df0))==0:
+            raise ValueError('Not stratified. Review threshold value.')
+
+        # log-rank test
+        results = logrank_test(df1["OS_Time"], df0["OS_Time"], df1["OS_Status"], df0["OS_Status"])
+        p_log = float(results.summary["p"])
+
+        # generalized wilcoxon test
+        results = logrank_test(df1["OS_Time"], df0["OS_Time"], df1["OS_Status"], df0["OS_Status"], weightings = "wilcoxon")
+        p_wil = float(results.summary["p"])
+
+        self.res_log = pd.DataFrame({'log-rank':[p_log],'wilcoxon':[p_wil]})
+
+        plot_curves(concat_value_df,target=[cell])
 
 
 def plot_curves(df,target=[""]):
