@@ -124,7 +124,7 @@ def plot_once(df,target):
     for i, group in df.groupby(target):
         kmf = KMF()
         kmf.fit(group['OS_Time'], event_observed=group['OS_Status'],
-                label = target + ':' + str(i))
+                label = str(target) + ':' + str(i))
         if ax is None:
             ax = kmf.plot()
         else:

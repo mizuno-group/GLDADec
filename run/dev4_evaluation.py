@@ -72,6 +72,8 @@ class Evaluation():
                    title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],figsize=(6,6),dpi=100,plot_size=100):
         color_list = list(tab_colors.keys())
         performance_list = []
+        dec_eval_x = []
+        ref_eval_y = []
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
@@ -79,10 +81,16 @@ class Evaluation():
             title = title_list[i]
             dat = plot_utils.DeconvPlot(deconv_df=self.ensemble_res,val_df=self.ref_df,dec_name=res_name,val_name=ref_name,figsize=figsize,dpi=dpi,plot_size=plot_size)
             a = dat.plot_simple_corr(color=color,title=title)
+            dec_eval_x.append(a[1])
+            ref_eval_y.append(a[2])
             performance = a[0]
             performance_list.append(list(performance.items()))
         
+        self.evalxy = [dec_eval_x,ref_eval_y]
         self.performance_dic = dict(zip(title_list,performance_list))
+
+        dat.overlap_singles(evalxy=self.evalxy,title_list=title_list)
+
     
     def multi_eval_multi_group(self,
                                res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
