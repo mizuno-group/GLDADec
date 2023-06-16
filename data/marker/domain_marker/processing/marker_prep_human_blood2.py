@@ -84,7 +84,7 @@ cellmarker_dic = dict(zip(k,a))
 pd.to_pickle(cellmarker_dic,'/workspace/github/GLDADec/data/marker/domain_marker/results/v2/CellMarker_dic.pkl')
 
 #%% reflect domain knowledge
-b = [mon_marker,neu_marker,nk_marker,bnaive_marker,sym_bm,sym_cd4n,sym_cd4m,cd8_marker,gd_marker,sym_dc,sym_treg]
+b = [mon_marker,sym_neu,nk_marker,bnaive_marker,sym_bm,sym_cd4n,sym_cd4m,cd8_marker,gd_marker,sym_dc,sym_treg]
 k = ["Monocytes","Neutrophils","NK cells","B cells naive","B cells memory","T cells CD4 naive","T cells CD4 memory","T cells CD8","T cells gamma delta","Dendritic cells","Treg"]
 
 cellmarker_dic = dict(zip(k,b))
