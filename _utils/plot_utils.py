@@ -93,8 +93,7 @@ class DeconvPlot():
             pass
         return performance,res1,res2
 
-    def plot_group_corr(deconv_df,val_df,dec_name=["CD4","CD8"],val_name=["abT"],sort_index=[],
-                        do_plot=True,sep=True,title=None,do_print=False,dpi=300,plot_size=50):
+    def plot_group_corr(self,sort_index=[],sep=True,title=None):
         """
         Correlation Scatter Plotting
         Format of both input dataframe is as follows
@@ -108,20 +107,20 @@ class DeconvPlot():
         
         """
         if title is None:
-            title = str(dec_name)+" vs "+str(val_name)
+            title = str(self.dec_name)+" vs "+str(self.val_name)
         
         if len(sort_index)>0:
             drugs = sort_index
         elif sep:
-            drugs = sorted(list(set([t.split("_")[0] for t in deconv_df.index.tolist()])))
+            drugs = sorted(list(set([t.split("_")[0] for t in self.deconv_df.index.tolist()])))
         else:
-            drugs = sorted(deconv_df.index.tolist())
+            drugs = sorted(self.deconv_df.index.tolist())
         
         # align the index
-        val_df = val_df.loc[deconv_df.index.tolist()]
+        val_df = self.val_df.loc[self.deconv_df.index.tolist()]
         
-        total_x = deconv_df[dec_name].sum(axis=1).tolist()
-        total_y = val_df[val_name].sum(axis=1).tolist()
+        total_x = self.deconv_df[self.dec_name].sum(axis=1).tolist()
+        total_y = val_df[self.val_name].sum(axis=1).tolist()
         total_cor, pvalue = stats.pearsonr(total_x,total_y) # correlation and pvalue
         total_cor = round(total_cor,4)
         if pvalue < 0.01:
@@ -129,52 +128,47 @@ class DeconvPlot():
         else:
             pvalue = round(pvalue,3)
         rmse = round(np.sqrt(mean_squared_error(total_x, total_y)),4)
+        performance = {'R':total_cor,'P':pvalue,'RMSE':rmse}
+
+        fig,ax = plt.subplots(figsize=(6,6),dpi=self.dpi)
+        x_min = 100
+        x_max = -100
+        for i,d in enumerate(drugs):
+            tmp1 = self.deconv_df.filter(regex="^"+d+"_",axis=0)
+            tmp2 = val_df.filter(regex="^"+d+"_",axis=0)
+            
+            res1 = tmp1[self.dec_name].sum(axis=1).tolist()
+            res2 = tmp2[self.val_name].sum(axis=1).tolist()
+            tmp_cor = round(np.corrcoef(res1,res2)[0][1],3)
         
-        if do_print:
-            print(str(dec_name)+" vs "+str(val_name))
-            print(total_cor,pvalue,rmse)
+            #plt.scatter(res1,res2,label=d+" : "+str(tmp_cor),alpha=1.0,s=self.plot_size) # inner correlation
+            plt.scatter(res1,res2,label=d,alpha=1.0,s=self.plot_size)
+            xmin = min(min(res1),min(res2))
+            if xmin < x_min:
+                x_min = xmin
+            xmax = max(max(res1),max(res2))
+            if xmax > x_max:
+                x_max = xmax
         
-        if do_plot:
-            fig,ax = plt.subplots(figsize=(6,6),dpi=dpi)
-            x_min = 100
-            x_max = -100
-            for i,d in enumerate(drugs):
-                tmp1 = deconv_df.filter(regex="^"+d+"_",axis=0)
-                tmp2 = val_df.filter(regex="^"+d+"_",axis=0)
-                
-                res1 = tmp1[dec_name].sum(axis=1).tolist()
-                res2 = tmp2[val_name].sum(axis=1).tolist()
-                tmp_cor = round(np.corrcoef(res1,res2)[0][1],3)
-            
-                plt.scatter(res1,res2,label=d+" : "+str(tmp_cor),alpha=1.0,s=plot_size)
-                
-                xmin = min(min(res1),min(res2))
-                if xmin < x_min:
-                    x_min = xmin
-                xmax = max(max(res1),max(res2))
-                if xmax > x_max:
-                    x_max = xmax
-            
-            plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
-            plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
-            plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
-            plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
-            
-            #plt.legend(loc='upper center',shadow=True,fontsize=13,ncol=2,bbox_to_anchor=(.45, 1.12))
-            plt.legend(loc="upper left", bbox_to_anchor=(0.95, 1),shadow=True,fontsize=13)
-            plt.xlabel(self.xlabel,fontsize=self.label_size)
-            plt.ylabel(self.ylabel,fontsize=self.label_size)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.gca().yaxis.set_ticks_position('left')
-            plt.gca().xaxis.set_ticks_position('bottom')
-            ax.set_axisbelow(True)
-            ax.grid(color="#ababab",linewidth=0.5)
-            plt.title(title,fontsize=15)
-            plt.show()
-        else:
-            pass
-        return total_x,total_y,total_cor
+        plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+        plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
+        
+        #plt.legend(loc='upper center',shadow=True,fontsize=13,ncol=2,bbox_to_anchor=(.45, 1.12))
+        plt.legend(loc="upper left", bbox_to_anchor=(0.95, 1),shadow=True,fontsize=13)
+        plt.xlabel(self.xlabel,fontsize=self.label_size)
+        plt.ylabel(self.ylabel,fontsize=self.label_size)
+        plt.gca().spines['right'].set_visible(False)
+        plt.gca().spines['top'].set_visible(False)
+        plt.gca().yaxis.set_ticks_position('left')
+        plt.gca().xaxis.set_ticks_position('bottom')
+        ax.set_axisbelow(True)
+        ax.grid(color="#ababab",linewidth=0.5)
+        plt.title(title,fontsize=15)
+        plt.show()
+
+        return performance,total_x,total_y
     
     def overlap_singles(self,evalxy, title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes']):
         total_x = []
