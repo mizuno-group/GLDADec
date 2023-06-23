@@ -285,7 +285,7 @@ class Pipeline():
         Eval.set_ref(ref_df=norm_facs,z_norm=False)
         self.ensemble_res = Eval.ensemble_res
         if multi:
-            Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,dpi=dpi,plot_size=plot_size) # visualization
+            Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,title_list=title_list,figsize=figsize,dpi=dpi,plot_size=plot_size) # visualization
         else:
             Eval.multi_eval(res_names=res_names,ref_names=ref_names,title_list=title_list,figsize=figsize,dpi=dpi,plot_size=plot_size)
 

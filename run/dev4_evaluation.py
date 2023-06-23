@@ -94,28 +94,22 @@ class Evaluation():
     
     def multi_eval_multi_group(self,
                                res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                               ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],plot_size=100,dpi=100):
-        cor_list = []
+                               ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],
+                               ['Monocytes']],
+                               title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],figsize=(6,6),plot_size=100,dpi=100):
+        
+        performance_list = []
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
-            cor = self.evaluate_multi_group(res_name=res_name,ref_name=ref_name,dpi=dpi,plot_size=plot_size)
-            cor_list.append(cor)
+            title = title_list[i]
+            dat = plot_utils.DeconvPlot(deconv_df=self.ensemble_res,val_df=self.ref_df,dec_name=res_name,val_name=ref_name,figsize=figsize,dpi=dpi,plot_size=plot_size)
+            a = dat.plot_group_corr(sort_index=[],sep=True,title=title)
+            performance = a[0]
+            performance_list.append(list(performance.items()))
         
-        new_k = [t[0] for t in res_names]
-        self.cor_dic = dict(zip(new_k,cor_list))
+        self.performance_dic = dict(zip(title_list,performance_list))
     
-    def evaluate_multi_group(self,res_name=['B cells naive'],ref_name=['Naive B'],plot_size=100,dpi=100):
-        # ecaluate each cell
-        try:
-            a = plot_utils.plot_group_corr(deconv_df=self.ensemble_res,val_df=self.ref_df,
-                                           dec_name=res_name,val_name=ref_name,
-                                           do_plot=True,sep=True,dpi=dpi,plot_size=plot_size)
-            cor = a[-1]
-            return cor
-        except:
-            raise ValueError('res_name or ref_name is not correct')
-        
 def main():
     target_facs = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/facs_results.csv',index_col=0)
     in_path = '/mnt/AzumaDeconv/Topic_Deconv/GuidedLDA/221027_GSE65133/221101_CellMarker/221229_threshold_impact/results/'
