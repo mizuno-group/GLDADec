@@ -156,7 +156,7 @@ class DeconvPlot():
         plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
         
         #plt.legend(loc='upper center',shadow=True,fontsize=13,ncol=2,bbox_to_anchor=(.45, 1.12))
-        plt.legend(loc="upper left", bbox_to_anchor=(0.95, 1),shadow=True,fontsize=13)
+        plt.legend(loc="upper left", bbox_to_anchor=(1, 1),shadow=True,fontsize=13)
         plt.xlabel(self.xlabel,fontsize=self.label_size)
         plt.ylabel(self.ylabel,fontsize=self.label_size)
         plt.gca().spines['right'].set_visible(False)
