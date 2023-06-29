@@ -18,6 +18,7 @@ import pandas as pd
 import seaborn as sns
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
 Base_dir = '/workspace/github/GLDADec' # cloning repository
@@ -325,9 +326,9 @@ class Pipeline():
             overlap = False
         
         # correlation eval
+        fig, axes = plt.subplots(1, 2, figsize=(15, 6), sharex=True, sharey=True)
         cor = target_gc_other.corr()
-        sns.heatmap(cor,annot=True,fmt="1.2f")
-        plt.show()
+        sns.heatmap(cor,ax=axes[0],annot=True,fmt="1.2f")
 
         cor = cor.replace(1,-1)
         cor_max = cor.max().max()
@@ -335,5 +336,17 @@ class Pipeline():
             posi_cor = True
         else:
             posi_cor = False
+
+        # pvalue eval
+        pval = target_gc_other.corr(method=lambda x, y: pearsonr(x, y,alternative='greater')[1])
+        sns.heatmap(pval,ax=axes[1],annot=True,fmt="1.1e",cmap='cividis',annot_kws={"fontsize":6})
+        plt.show()
+
+        min_pvalue = pval.min().min()
+        if min_pvalue < 0.05:
+            posi_pvalue = True
+        else:
+            posi_pvalue = False
+
         logger.info('overlap: {}, positive_correlation: {}'.format(overlap,posi_cor))
-        return overlap,posi_cor
+        return overlap, posi_pvalue
