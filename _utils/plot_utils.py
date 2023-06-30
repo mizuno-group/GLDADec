@@ -259,3 +259,57 @@ def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,
     plt.title(title)
     plt.xticks(rotation=60)
     plt.show()
+
+def plot_rader(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['w/o addnl. topic','w/ addnl. topic'],title='APAP Treatment'):
+    # preprocessing
+    dft = pd.DataFrame(data,index=conditions)
+
+    # Split the circle into even parts and save the angles
+    # so we know where to put each axis.
+    angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
+
+    # The plot is a circle, so we need to "complete the loop"
+    # and append the start value to the end.
+    angles += angles[:1]
+
+    # ax = plt.subplot(polar=True)
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True), dpi=100)
+
+    # Helper function to plot each car on the radar chart.
+    def add_to_radar(name, color):
+        values = dft.loc[name].tolist()
+        values += values[:1]
+        ax.plot(angles, values, color=color, linewidth=2, label=name)
+        ax.fill(angles, values, color=color, alpha=0.25)
+    # Add each car to the chart.
+    add_to_radar(conditions[0], '#429bf4')
+    add_to_radar(conditions[1], '#ec6e95')
+
+    # Fix axis to go in the right order and start at 12 o'clock.
+    ax.set_theta_offset(np.pi/4)
+    ax.set_theta_direction(-1)
+
+    # Draw axis lines for each angle and label.
+    ax.set_thetagrids(np.degrees(angles)[0:len(labels)], labels)
+
+    # Go through labels and adjust alignment based on where
+    # it is in the circle.
+    for label, angle in zip(ax.get_xticklabels(), angles):
+        if angle in (0, np.pi):
+            label.set_horizontalalignment('left')
+        elif 0 < angle < np.pi:
+            label.set_horizontalalignment('left')
+        else:
+            label.set_horizontalalignment('right')
+
+    # Ensure radar range
+    #ax.set_ylim(0, 0.9)
+    ax.set_rlabel_position(180 / len(labels))
+    ax.tick_params(colors='#222222')
+    ax.tick_params(axis='y', labelsize=8)
+    ax.grid(color='#AAAAAA')
+    ax.spines['polar'].set_color('#222222')
+    ax.set_facecolor('#FAFAFA')
+    ax.set_title(title, y=1.02, fontsize=15)
+    ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
+    plt.show()
