@@ -296,10 +296,79 @@ class Pipeline():
         logger.info('facs_norm_range: {}'.format(facs_norm_range))
         logger.info('res_names: {}'.format(res_names))
         logger.info('facs_names: {}'.format(ref_names))
+    
+    def add_profile_eval(self,add_topic=10,topn=None,alternative='less'):
+        if alternative not in ['less','greater']:
+            raise ValueError('!! Inappropriate alternative setting !!')
 
-    def add_profile_eval(self,add_topic=10,topn=None):
         gcr = self.gene_contribution_res
         # summarize gene contributions
+        pvalue_list = []
+        cor_list = []
+        max_p_list = []
+        min_p_list = []
+        overlap = False
+        for t in gcr:
+            sorted_genes = sorted(t[0].index.tolist())
+            gc_df = t[0].loc[sorted_genes]
+            add_gc = gc_df[[i+1 for i in range(add_topic)]] # added topics
+            other_genes = self.other_genes
+            add_gc_other = add_gc.loc[other_genes] # added gene contribution to added topics
+            if topn is None:
+                topn = int(len(add_gc_other)/add_topic) # soft threshold
+
+            target_genes = []
+            for t in add_gc_other.columns.tolist():
+                tmp_df = add_gc_other[[t]].sort_values(t,ascending=False)
+                top_genes = tmp_df.index.tolist()[0:topn] # high contribution to the topic
+                target_genes.extend(top_genes)
+            target_gc_other = add_gc_other.loc[sorted(list(set(target_genes)))]
+
+            # overlap eval
+            if len(target_gc_other) != len(target_genes):
+                overlap = True
+            # metric
+            cor = target_gc_other.corr()
+            cor_list.append(cor)
+            pval = target_gc_other.corr(method=lambda x, y: pearsonr(x, y,alternative=alternative)[1])
+            pvalue_list.append(pval)
+            max_pval = np.triu(np.array(pval),k=1).max()
+            tmp =  np.triu(np.array(pval),k=1)
+            min_pval =np.where(tmp==0,1,tmp).min() # no considerations other than the upper triangle
+            max_p_list.append(max_pval)
+            min_p_list.append(min_pval)
+
+        # select
+        if alternative == 'less':
+            #target_p = max(max_p_list) # max(max_p_list) is the most strict condition
+            target_p = min(max_p_list) # min(max_p_list) is mild condition
+            target_index = max_p_list.index(target_p)
+        else:
+            target_p = min(min_p_list)
+            target_index = min_p_list.index(target_p)
+
+        p_res = pvalue_list[target_index]
+        cor_res = cor_list[target_index]
+
+        # correlation eval
+        fig, axes = plt.subplots(1, 2, figsize=(15, 6), sharex=True, sharey=True)
+        sns.heatmap(cor_res,ax=axes[0],annot=True,fmt="1.2f")
+
+        # pvalue eval
+        sns.heatmap(p_res,ax=axes[1],annot=True,fmt="1.1e",cmap='cividis',annot_kws={"fontsize":6})
+        plt.show()
+        if target_p < 0.05:
+            pval_flag = False
+        else:
+            pval_flag = True
+
+        logger.info('overlap: {}, pvalue: {}'.format(overlap,pval_flag))
+        return overlap, pval_flag, min_p_list, max_p_list
+
+    def add_profile_eval_legacy(self,add_topic=10,topn=None):
+        gcr = self.gene_contribution_res
+        # summarize gene contributions
+        # FIXME: Each additional topic may not be equivalent
         l = []
         for t in gcr:
             sorted_genes = sorted(t[0].index.tolist())
