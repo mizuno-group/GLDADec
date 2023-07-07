@@ -260,7 +260,7 @@ def plot_multi(data=[[11,50,37,202,7],[47,19,195,117,74],[136,69,33,47],[100,12,
     plt.xticks(rotation=60)
     plt.show()
 
-def plot_rader(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['w/o addnl. topic','w/ addnl. topic'],title='APAP Treatment'):
+def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['w/o addnl. topic','w/ addnl. topic'],title='APAP Treatment'):
     # preprocessing
     dft = pd.DataFrame(data,index=conditions)
 

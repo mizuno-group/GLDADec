@@ -297,7 +297,7 @@ class Pipeline():
         logger.info('res_names: {}'.format(res_names))
         logger.info('facs_names: {}'.format(ref_names))
     
-    def add_profile_eval(self,add_topic=10,topn=None,alternative='less'):
+    def add_profile_eval(self,add_topic=10,topn=None,alternative='less',do_plot=True):
         if alternative not in ['less','greater']:
             raise ValueError('!! Inappropriate alternative setting !!')
 
@@ -350,13 +350,14 @@ class Pipeline():
         p_res = pvalue_list[target_index]
         cor_res = cor_list[target_index]
 
-        # correlation eval
-        fig, axes = plt.subplots(1, 2, figsize=(15, 6), sharex=True, sharey=True)
-        sns.heatmap(cor_res,ax=axes[0],annot=True,fmt="1.2f")
+        if do_plot:
+            # correlation eval
+            fig, axes = plt.subplots(1, 2, figsize=(15, 6), sharex=True, sharey=True)
+            sns.heatmap(cor_res,ax=axes[0],annot=True,fmt="1.2f")
 
-        # pvalue eval
-        sns.heatmap(p_res,ax=axes[1],annot=True,fmt="1.1e",cmap='cividis',annot_kws={"fontsize":6})
-        plt.show()
+            # pvalue eval
+            sns.heatmap(p_res,ax=axes[1],annot=True,fmt="1.1e",cmap='cividis',annot_kws={"fontsize":6})
+            plt.show()
         if target_p < 0.05:
             pval_flag = False
         else:
