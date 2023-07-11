@@ -45,7 +45,7 @@ class Pipeline():
         self.mm_df = None
     
     def from_predata(self,mix_raw,ann_ref=None,batch_info=None,target_samples=['Ctrl','APAP'],
-                    do_ann=True,log2linear=False,linear2log=False,do_drop=True,do_batch_norm=True,do_quantile=True):
+                    do_ann=True,log2linear=False,linear2log=False,do_drop=True,do_batch_norm=True,do_quantile=True,remove_noise=False):
         """
         You can skip below 1.set_data() and 2.sample_selection()
         """
@@ -56,6 +56,23 @@ class Pipeline():
         PP.preprocessing(do_ann=do_ann,log2linear=log2linear,linear2log=linear2log,do_drop=do_drop,do_batch_norm=do_batch_norm,do_quantile=do_quantile)
         target_df = PP.target_df
         target_df.index = [t.upper() for t in target_df.index.tolist()]
+        if remove_noise:
+            # remove ribosomal and mitochondrial genes
+            rps = [] # ribosomal protein
+            mts = [] # mitochondrial gene
+            target_genes = []
+            for g in target_df.index.tolist():
+                if g[0:3] in ['RPL','RPS']:
+                    rps.append(g)
+                elif g[0:3] in ['MT-']:
+                    mts.append(g)
+                else:
+                    target_genes.append(g)
+            target_df = target_df.loc[sorted(target_genes)]
+            logger.info('ribosomal_genes: {}'.format(len(rps)))
+            logger.info('mitochondrial_genes: {}'.format(len(mts)))
+        else:
+            pass
         self.target_df = target_df
 
     def set_data(self,df,marker_dic:dict):
