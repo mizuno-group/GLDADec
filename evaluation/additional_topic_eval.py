@@ -29,9 +29,19 @@ class AddTopicEval():
         self.cluster_df = None
     
     def set_gene_contr_res(self,gene_contr_res:list):
+        """ set gene contribution list
+
+        Args:
+            gene_contr_res (list): pipeline.Pipeline().gene_contribution_res
+        """
         self.gene_contr_res = gene_contr_res
     
     def set_deconv_res(self,deconv_res:list):
+        """ set deconvolution output
+
+        Args:
+            deconv_res (list): pipeline.Pipeline().merge_total_res
+        """
         self.deocnv_res = deconv_res
     
     def flatten(self):
@@ -51,8 +61,8 @@ class AddTopicEval():
         mm_scaler = MinMaxScaler()
         mm_df = (pd.DataFrame(mm_scaler.fit_transform(additional_summary),index=additional_summary.index, columns=additional_summary.columns))
 
-        sns.clustermap(mm_df,z_score=1)
-        plt.show()
+        #sns.clustermap(mm_df,z_score=1)
+        #plt.show()
 
         self.additional_summary = mm_df
     
@@ -80,17 +90,23 @@ class AddTopicEval():
         
         self.cluster_df = cluster_df
 
-    def conduct_fet(self,ref_dic:dict,threshold=None):
+    def conduct_fet(self,ref_dic:dict,threshold=None,cluster=True):
         # pd.read_pickle('/workspace/github/enan/enan/enrichr/KEGG_2019_Mouse_ref_dic.pkl')
-        if self.cluster_df is None:
+        if cluster:
+            if self.cluster_df is None:
+                raise ValueError("!! conduct topic_clustering or change to cluster=False !!")
+            else:
+                num = self.n_clusters
+        else:
             self.cluster_df = copy.deepcopy(self.additional_summary)
             self.cluster_df.columns = [i for i in range(len(self.cluster_df.T))]
-            self.n_clusters = len(self.cluster_df.T)
+            num = len(self.cluster_df.T)
+        
 
         if threshold is None:
             threshold = 1/self.n_clusters
         res_summary = []
-        for i in range(self.n_clusters):
+        for i in range(num):
             try:
                 contr_df = pd.DataFrame(self.cluster_df[i].mean(axis=1))
             except:
@@ -103,5 +119,7 @@ class AddTopicEval():
             res = dat.calc(high_gene) # analyze data of interest
             res_summary.append(res)
         self.res_summary = res_summary
+    
+    
 
 

@@ -32,7 +32,7 @@ class DeconvPlot():
         self.label_size = 20
         self.tick_size = 15
 
-    def plot_simple_corr(self,color='tab:blue',title='Naive B'):
+    def plot_simple_corr(self,color='tab:blue',title='Naive B',target_samples=None):
         """
         Correlation Scatter Plotting
         Format of both input dataframe is as follows
@@ -56,15 +56,22 @@ class DeconvPlot():
         rmse = round(np.sqrt(mean_squared_error(total_x, total_y)),4)
         performance = {'R':total_cor,'P':pvalue,'RMSE':rmse}
         
-        res1 = self.deconv_df[self.dec_name].sum(axis=1).tolist()
-        res2 = self.val_df[self.val_name].sum(axis=1).tolist()
-        
-        x_min = min(min(res1),min(res2))
-        x_max = max(max(res1),max(res2))
+        x_min = min(min(total_x),min(total_y))
+        x_max = max(max(total_x),max(total_y))
         
         if self.do_plot:
             fig,ax = plt.subplots(figsize=self.figsize,dpi=self.dpi)
-            plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color)
+            if target_samples is None:
+                plt.scatter(total_x,total_y,alpha=1.0,s=self.plot_size,c=color)
+            else:
+                markers1 = ["o", "^", "+", ",", "v",  "<", ">"]
+                for mi,d in enumerate(target_samples):
+                    tmp1 = self.deconv_df.filter(regex="^"+d+"_",axis=0)
+                    tmp2 = self.val_df.filter(regex="^"+d+"_",axis=0)
+                    res1 = tmp1[self.dec_name].sum(axis=1).tolist()
+                    res2 = tmp2[self.val_name].sum(axis=1).tolist()
+                    plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color,marker=markers1[mi])
+
             #plt.plot([0,x_max],[0,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
             plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
             plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
@@ -91,7 +98,7 @@ class DeconvPlot():
             plt.show()
         else:
             pass
-        return performance,res1,res2
+        return performance,total_x,total_y
 
     def plot_group_corr(self,sort_index=[],sep=True,title=None):
         """
@@ -169,6 +176,70 @@ class DeconvPlot():
         plt.show()
 
         return performance,total_x,total_y
+    
+    def overlap_groups(self,evalxy,res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],color_list=None,target_samples=None):
+        if color_list is None:
+            color_list = list(tab_colors.keys())
+        # collect information
+        total_x = []
+        for t in evalxy[0]:
+            total_x.extend(t)
+        total_y = []
+        for t in evalxy[1]:
+            total_y.extend(t)
+        
+        total_cor, pvalue = stats.pearsonr(total_x,total_y) # correlation and pvalue
+        total_cor = round(total_cor,4)
+        if pvalue < 0.01:
+            pvalue = '{:.2e}'.format(pvalue)
+        else:
+            pvalue = round(pvalue,3)
+        rmse = round(np.sqrt(mean_squared_error(total_x, total_y)),4)
+        performance = {'R':total_cor,'P':pvalue,'RMSE':rmse}
+
+        x_min = min(min(total_x),min(total_y))
+        x_max = max(max(total_x),max(total_y))
+        
+        fig,ax = plt.subplots(figsize=self.figsize,dpi=self.dpi)
+        for i in range(len(res_names)):
+            res_name = res_names[i]
+            ref_name = ref_names[i]
+            print(res_name)
+
+            if target_samples is None:
+                res1 = self.deconv_df[res_name].sum(axis=1).tolist()
+                res2 = self.val_df[ref_name].sum(axis=1).tolist()
+                plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color_list[i],label=title[i])
+            else:
+                markers1 = ["o", "^", "+", ",", "v",  "<", ">"]
+                for mi,d in enumerate(target_samples):
+                    tmp1 = self.deconv_df.filter(regex="^"+d+"_",axis=0)
+                    tmp2 = self.val_df.filter(regex="^"+d+"_",axis=0)
+                    res1 = tmp1[res_name].sum(axis=1).tolist()
+                    res2 = tmp2[ref_name].sum(axis=1).tolist()
+                    if mi == 0:
+                        plt.scatter(res1,res2,alpha=0.8,s=self.plot_size,c=color_list[i],marker=markers1[mi],label=title_list[i])
+                    else:
+                        plt.scatter(res1,res2,alpha=0.8,s=self.plot_size,c=color_list[i],marker=markers1[mi])
+
+        plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+        plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
+        plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
+        
+        plt.xlabel(self.xlabel,fontsize=self.label_size)
+        plt.ylabel(self.ylabel,fontsize=self.label_size)
+        plt.xticks(fontsize=self.tick_size)
+        plt.yticks(fontsize=self.tick_size)
+        plt.gca().spines['right'].set_visible(False)
+        plt.gca().spines['top'].set_visible(False)
+        plt.gca().yaxis.set_ticks_position('left')
+        plt.gca().xaxis.set_ticks_position('bottom')
+        ax.set_axisbelow(True)
+        ax.grid(color="#ababab",linewidth=0.5)
+        plt.legend(shadow=True,bbox_to_anchor=(1.0, 1), loc='upper left')
+        #plt.title(title,fontsize=self.label_size)
+        plt.show()
     
     def overlap_singles(self,evalxy, title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes']):
         total_x = []
@@ -313,3 +384,18 @@ def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0
     ax.set_title(title, y=1.02, fontsize=15)
     ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
     plt.show()
+
+def estimation_var(total_res,cell='Neutrophil',dpi=100):
+    summary_df = pd.DataFrame()
+    for idx,tmp_df in enumerate(total_res):
+        cell_df = tmp_df[[cell]]
+        cell_df.columns = [idx] # rename column
+        summary_df = pd.concat([summary_df,cell_df],axis=1)
+
+    sample_names = summary_df.index.tolist()
+    data = []
+    for sample in sample_names:
+        data.append(list(summary_df.loc[sample]))
+    
+    # plot bar
+    plot_multi(data=data,names=sample_names,value='Deconvolution value (%)', title=str(cell)+" estimation variance",grey=False,dpi=dpi)

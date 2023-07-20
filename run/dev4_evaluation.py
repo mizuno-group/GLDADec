@@ -69,7 +69,9 @@ class Evaluation():
     def multi_eval(self,
                    res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
                    ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],
-                   title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],figsize=(6,6),dpi=100,plot_size=100):
+                   title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],
+                   target_samples = None,
+                   figsize=(6,6),dpi=100,plot_size=100):
         color_list = list(tab_colors.keys())
         performance_list = []
         dec_eval_x = []
@@ -80,7 +82,7 @@ class Evaluation():
             color = color_list[i]
             title = title_list[i]
             dat = plot_utils.DeconvPlot(deconv_df=self.ensemble_res,val_df=self.ref_df,dec_name=res_name,val_name=ref_name,figsize=figsize,dpi=dpi,plot_size=plot_size)
-            a = dat.plot_simple_corr(color=color,title=title)
+            a = dat.plot_simple_corr(color=color,title=title,target_samples=target_samples)
             dec_eval_x.append(a[1])
             ref_eval_y.append(a[2])
             performance = a[0]
@@ -89,7 +91,8 @@ class Evaluation():
         self.evalxy = [dec_eval_x,ref_eval_y]
         self.performance_dic = dict(zip(title_list,performance_list))
 
-        dat.overlap_singles(evalxy=self.evalxy,title_list=title_list)
+        #dat.overlap_singles(evalxy=self.evalxy,title_list=title_list)
+        dat.overlap_groups(evalxy=self.evalxy,res_names=res_names,ref_names=ref_names,title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],color_list=color_list,target_samples=target_samples)
 
     
     def multi_eval_multi_group(self,

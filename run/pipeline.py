@@ -24,14 +24,14 @@ from sklearn.preprocessing import MinMaxScaler
 Base_dir = '/workspace/github/GLDADec' # cloning repository
 import sys
 sys.path.append(Base_dir)
-from run import dev_utils
+
 from run import dev0_preprocessing
 from run import dev1_set_data
 from run import dev2_anchor_detection
 from run import dev3_deconvolution
 from run import dev4_evaluation
 from gldadec import utils
-from _utils import processing
+from _utils import processing, plot_utils
 
 #%%
 logger = logging.getLogger('pipeline')
@@ -262,7 +262,7 @@ class Pipeline():
             cell_candi = total_res[0].columns.tolist()
             for cell in cell_candi:
                 try:
-                    dev_utils.estimation_var(total_res=merge_total_res,cell=str(cell))
+                    plot_utils.estimation_var(total_res=merge_total_res,cell=str(cell))
                 except:
                     pass
         logger.info('n_ensemble: {}, n_add_topics: {}, n_iter: {}'.format(n,add_topic,n_iter))
@@ -271,7 +271,9 @@ class Pipeline():
     def evaluate(self,facs_df=None,deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
     res_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
     ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
-    title_list=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],figsize=(6,6),dpi=50,plot_size=100,multi=True):
+    title_list=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],
+    target_samples = None,
+    figsize=(6,6),dpi=50,plot_size=100,multi=True):
         """
         ----------
         ref_df : pd.DataFrame
@@ -289,9 +291,9 @@ class Pipeline():
         Eval = dev4_evaluation.Evaluation()
         # normalize
         if len(deconv_norm_range)==0:
-            norm_res = self.merge_total_res
+            self.norm_res = self.merge_total_res
         else:
-            norm_res = utils.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
+            self.norm_res = utils.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
         
         if len(facs_norm_range)==0:
             norm_facs = facs_df
@@ -299,13 +301,13 @@ class Pipeline():
             norm_facs = utils.norm_val(val_df=facs_df,base_names=facs_norm_range)
         
         # evaluation
-        Eval.set_res(total_res=norm_res,z_norm=False)
+        Eval.set_res(total_res=self.norm_res,z_norm=False)
         Eval.set_ref(ref_df=norm_facs,z_norm=False)
         self.ensemble_res = Eval.ensemble_res
         if multi:
             Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,title_list=title_list,figsize=figsize,dpi=dpi,plot_size=plot_size) # visualization
         else:
-            Eval.multi_eval(res_names=res_names,ref_names=ref_names,title_list=title_list,figsize=figsize,dpi=dpi,plot_size=plot_size)
+            Eval.multi_eval(res_names=res_names,ref_names=ref_names,title_list=title_list,target_samples=target_samples,figsize=figsize,dpi=dpi,plot_size=plot_size)
 
         self.performance_dic = Eval.performance_dic
         pprint.pprint(self.performance_dic)
