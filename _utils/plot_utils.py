@@ -204,7 +204,6 @@ class DeconvPlot():
         for i in range(len(res_names)):
             res_name = res_names[i]
             ref_name = ref_names[i]
-            print(res_name)
 
             if target_samples is None:
                 res1 = self.deconv_df[res_name].sum(axis=1).tolist()

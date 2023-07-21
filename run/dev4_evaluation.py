@@ -92,7 +92,7 @@ class Evaluation():
         self.performance_dic = dict(zip(title_list,performance_list))
 
         #dat.overlap_singles(evalxy=self.evalxy,title_list=title_list)
-        dat.overlap_groups(evalxy=self.evalxy,res_names=res_names,ref_names=ref_names,title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],color_list=color_list,target_samples=target_samples)
+        dat.overlap_groups(evalxy=self.evalxy,res_names=res_names,ref_names=ref_names,title_list=title_list,color_list=color_list,target_samples=target_samples)
 
     
     def multi_eval_multi_group(self,
