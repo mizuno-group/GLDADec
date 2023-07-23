@@ -30,3 +30,4 @@ coef_df <- data.frame(coef)
 '''
 - 'LM22 (22 immune cell types) was selected as signature matrix'
 - Default parameters were used.
+- lognorm=True (default)
