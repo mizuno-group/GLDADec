@@ -52,6 +52,7 @@ final_ref = dat.final_ref
 deg_dic = dat.deg_dic
 pd.to_pickle(deg_dic,'/workspace/github/GLDADec/data/rat/marker/DEGs/rnaseq_100.pkl')
 
+
 #%% 230531 domain
 # B cell
 bcandi = ['BCR','CD79A','CD79B'] # https://www.bdj.co.jp/pdf/55-28_00-6081-69A1.pdf
