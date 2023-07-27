@@ -6,6 +6,8 @@ from lifelines.statistics import logrank_test
 from lifelines import fitters as fit
 from lifelines import KaplanMeierFitter as KMF
 
+from sklearn.cluster import KMeans
+
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -32,7 +34,7 @@ class TCGA_Analysis():
 
     def preprocessing(self,hard_threshold=-1,lower_days=0,upper_days=3650):
         # sample name norm
-        id2sample = pd.read_pickle('/workspace/github/GLDADec/tcga_eval/data/caseid2sample_dic.pkl')
+        id2sample = pd.read_pickle('/workspace/github/GLDADec/evaluation/data/caseid2sample_dic.pkl')
         self.clinical.index = [id2sample.get(t) for t in self.clinical['case_id'].tolist()] # rename index
 
         exp_samples = self.exp.columns.tolist()
@@ -173,9 +175,14 @@ def plot_once(df,target):
             ax = kmf.plot(ax=ax)
 
 
-def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['BRCA','LUAD','LIHC'],title='Cell Proportions'):
+def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['BRCA','LUAD','LIHC'],title='Cell Proportions',show_name=True):
     # preprocessing
-    dft = pd.DataFrame(data,index=conditions)
+    dft = pd.DataFrame(data,index=conditions,columns=labels).T
+    pred = KMeans(n_clusters=len(conditions)).fit_predict(dft)
+    dft['pred'] = pred
+    dft = dft.sort_values('pred')
+    labels = dft.index.tolist() # update
+    dft = dft.T
 
     # Split the circle into even parts and save the angles
     # so we know where to put each axis.
@@ -192,13 +199,12 @@ def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0
     def add_to_radar(name, color):
         values = dft.loc[name].tolist()
         values += values[:1]
-        print(values)
         ax.plot(angles, values, color=color, linewidth=2, label=name)
         ax.fill(angles, values, color=color, alpha=0.25)
     # Add each car to the chart.
-    add_to_radar(conditions[0], '#429bf4')
-    add_to_radar(conditions[1], '#ec6e95')
-    add_to_radar(conditions[2], '#f49b42')
+    color_list = ['#429bf4','#f49b42','#38d583','#ec6e95','#8a4ebf']
+    for ci in range(len(conditions)):
+        add_to_radar(conditions[ci], color_list[ci])
 
     # Fix axis to go in the right order and start at 12 o'clock.
     ax.set_theta_offset(np.pi/2)
@@ -209,13 +215,16 @@ def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0
 
     # Go through labels and adjust alignment based on where
     # it is in the circle.
-    for label, angle in zip(ax.get_xticklabels(), angles):
-        if angle in (0, np.pi):
-            label.set_horizontalalignment('center')
-        elif 0 < angle < np.pi:
-            label.set_horizontalalignment('left')
-        else:
-            label.set_horizontalalignment('right')
+    if show_name:
+        for label, angle in zip(ax.get_xticklabels(), angles):
+            if angle in (0, np.pi):
+                label.set_horizontalalignment('center')
+            elif 0 < angle < np.pi:
+                label.set_horizontalalignment('left')
+            else:
+                label.set_horizontalalignment('right')
+    else:
+        ax.set_xticklabels([i+1 for i in range(len(labels))])
 
     # Ensure radar range
     #ax.set_ylim(0, 0.9)

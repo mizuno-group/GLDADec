@@ -48,6 +48,14 @@ class PreProcessing():
 
             
     def preprocessing(self,do_ann=True,linear2log=False,log2linear=False,do_drop=True,do_batch_norm=True,do_quantile=True):
+        # gene name duplication
+        if len(self.target_df) != len(set(self.target_df.index.tolist())):
+            tmp_df = copy.deepcopy(self.target_df)
+            idx_name = tmp_df.index.tolist()
+            tmp_df['symbol'] = idx_name
+            tmp_df = tmp_df.dropna(subset=["symbol"])
+            self.target_df = tmp_df.groupby("symbol").median() # take median value for duplication rows
+
         # annotation
         if do_ann:
             self.target_df = processing.annotation(self.target_df, self.ann_ref)
