@@ -25,12 +25,10 @@ class Evaluation():
             self.total_res = []
             for res in total_res:
                 z_res = processing.standardz_sample(res) # sample wide normalization
-                # print(z_res.sum())
                 self.total_res.append(z_res)
         else:
             self.total_res = total_res
         self.samples = self.total_res[0].index.tolist()
-        #print("samples of res",self.total_res[0].index.tolist())
 
         # ensemble
         sum_res = sum(self.total_res) / len(total_res)
@@ -62,7 +60,6 @@ class Evaluation():
         else:
             ref_df = ref_df.loc[self.samples]
             self.ref_df = ref_df
-        #print("samples of ref",self.ref_df.index.tolist())
         print('cells in ref :',self.ref_df.columns.tolist()) # TODO : add logging
     
     #%% main
@@ -91,14 +88,12 @@ class Evaluation():
         self.evalxy = [dec_eval_x,ref_eval_y]
         self.performance_dic = dict(zip(title_list,performance_list))
 
-        #dat.overlap_singles(evalxy=self.evalxy,title_list=title_list)
-        dat.overlap_groups(evalxy=self.evalxy,res_names=res_names,ref_names=ref_names,title_list=title_list,color_list=color_list,target_samples=target_samples)
+        self.total_cor = dat.overlap_groups(evalxy=self.evalxy,res_names=res_names,ref_names=ref_names,title_list=title_list,color_list=color_list,target_samples=target_samples)
 
     
     def multi_eval_multi_group(self,
                                res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
-                               ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],
-                               ['Monocytes']],
+                               ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],
                                title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],figsize=(6,6),plot_size=100,dpi=100):
         
         performance_list = []
