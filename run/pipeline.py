@@ -308,6 +308,7 @@ class Pipeline():
             Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,title_list=title_list,figsize=figsize,dpi=dpi,plot_size=plot_size) # visualization
         else:
             Eval.multi_eval(res_names=res_names,ref_names=ref_names,title_list=title_list,target_samples=target_samples,figsize=figsize,dpi=dpi,plot_size=plot_size)
+            self.total_cor = Eval.total_cor
 
         self.performance_dic = Eval.performance_dic
         pprint.pprint(self.performance_dic)

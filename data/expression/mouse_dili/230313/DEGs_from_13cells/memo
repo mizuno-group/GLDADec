@@ -1,6 +1,0 @@
-230314
-deg_dic_50percell_29922x46.pkl
-- select genes that are registered in target data (29922 genes)
-- number=50, limit_CV=1.0 (smaller than the former analysis),limitFC=1.5
-processed on 230314_DEGs_definition.py
-

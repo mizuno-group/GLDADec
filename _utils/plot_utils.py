@@ -239,6 +239,8 @@ class DeconvPlot():
         plt.legend(shadow=True,bbox_to_anchor=(1.0, 1), loc='upper left')
         #plt.title(title,fontsize=self.label_size)
         plt.show()
+
+        return total_cor
     
     def overlap_singles(self,evalxy, title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes']):
         total_x = []

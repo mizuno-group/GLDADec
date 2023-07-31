@@ -101,7 +101,6 @@ class AddTopicEval():
             self.cluster_df = copy.deepcopy(self.additional_summary)
             self.cluster_df.columns = [i for i in range(len(self.cluster_df.T))]
             num = len(self.cluster_df.T)
-        
 
         if threshold is None:
             threshold = 1/self.n_clusters
