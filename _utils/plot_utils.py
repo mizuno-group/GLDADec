@@ -177,7 +177,9 @@ class DeconvPlot():
 
         return performance,total_x,total_y
     
-    def overlap_groups(self,evalxy,res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],color_list=None,target_samples=None):
+    def overlap_groups(self,evalxy,res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
+    ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],
+    color_list=None,target_samples=None):
         if color_list is None:
             color_list = list(tab_colors.keys())
         # collect information
@@ -208,7 +210,7 @@ class DeconvPlot():
             if target_samples is None:
                 res1 = self.deconv_df[res_name].sum(axis=1).tolist()
                 res2 = self.val_df[ref_name].sum(axis=1).tolist()
-                plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color_list[i],label=title[i])
+                plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color_list[i],label=title_list[i])
             else:
                 markers1 = ["o", "^", "+", ",", "v",  "<", ">"]
                 for mi,d in enumerate(target_samples):
