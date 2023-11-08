@@ -15,7 +15,11 @@ from matplotlib.collections import EllipseCollection
 # %%
 def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_performance_summary/GSE65133',
                   methods = ['Proposed','FARDEEP','EPIC','CIBERSORT','DCQ','NNLS','RLR','ElasticNet'],
-                  cells = ['Naive B', 'Memory B', 'Naive CD4 T', 'Memory CD4 T', 'CD8 T', 'NK', 'Monocytes', 'Gamma delta T']):
+                  cells = ['Naive B', 'Memory B', 'Naive CD4 T', 'Memory CD4 T', 'CD8 T', 'NK', 'Monocytes', 'Gamma delta T'],res_type='cor'):
+    if res_type in ['cor','rmse']:
+        pass
+    else:
+        raise ValueError('!! Inappropriate Type !!')
     cor_data = []
     rmse_data = []
     for method in methods:
@@ -36,7 +40,10 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
         rmse_data.append(rmse_list)
 
     # plot bar
-    data = cor_data
+    if res_type == 'cor':
+        data = cor_data
+    else:
+        data = rmse_data
     hatch_list = ['/', '|', '-', '+', 'x', 'o', 'O', '.', '*']
     fig,ax = plt.subplots(figsize=(15,8),dpi=300)
     x = [k*len(data) for k in range(len(cells))]
@@ -59,6 +66,7 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
     plt.show()
 
     # display heatmap
+    fig,ax = plt.subplots(dpi=300)
     cor_df = pd.DataFrame(data)
     sns.heatmap(cor_df,annot=True,linewidths=0.5,cmap='cividis',fmt='.2f')
     plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
@@ -91,7 +99,7 @@ def cor_rmse_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perf
 
     M = np.array(cor_data)
     M2 = np.array(rmse_data)
-    fig, ax = plt.subplots(1, 1, subplot_kw={'aspect':'equal'})
+    fig, ax = plt.subplots(1, 1, subplot_kw={'aspect':'equal'}, dpi=300)
     ax.set_xlim(-0.5, M.shape[1] - 0.5)
     ax.set_ylim(-0.5, M.shape[0] - 0.5)
     # xy locations of each ellipse center
