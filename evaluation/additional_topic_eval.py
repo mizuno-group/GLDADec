@@ -75,7 +75,7 @@ class AddTopicEval():
         self.n_clusters = n_clusters
         
         if method=='kmeans':
-            kmeans = KMeans(n_clusters=self.n_clusters)
+            kmeans = KMeans(n_clusters=self.n_clusters,random_state=123)
             kmeans.fit(self.additional_summary.T)
             label_info = kmeans.labels_
         else:

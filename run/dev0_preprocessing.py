@@ -85,7 +85,7 @@ class PreProcessing():
         else:
             pass
         # batch normalization
-        if do_batch_norm:
+        if do_batch_norm: # TODO: generalize
             df_c = copy.deepcopy(self.target_df)
             info = self.batch_info.loc[df_c.columns.tolist()] # sample selection
 
