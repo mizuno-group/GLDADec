@@ -1,0 +1,20 @@
+220802
+how to compile *.pyx
+move to this directory (cd C:/github/TopicModelDeconv/basic_LDA)
+python setup.py build_ext --inplace
+glda
+# initial trial (HBRTR1)
+No module named 'Cython' : pip install cython
+command 'gcc' failed: No such file or directory : sudo apt-get install gcc
+	(if error occures : sudo apt-get update and retry)
+
+220903
+from distutils.core import setup, Extension
+from Cython.Build import cythonize
+from numpy import get_include # to use cimport
+
+ext = Extension("_pam", sources=["_pam.pyx", "gamma.c"], include_dirs=['.', get_include()])
+setup(name="_pam", ext_modules=cythonize([ext]))
+
+でコンパイルす際に必要なものは、
+_pam.pyx, gamma.h, gamma.cであり、_pam.cはそのあとに作成される
