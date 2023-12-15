@@ -107,11 +107,11 @@ class TCGA_Analysis():
         if do_plot:
             plot_curves(self.concat_df,target=[cell])
     
-    def calc_top_bottom(self,cell='Macrophage',do_plot=True):
+    def calc_top_bottom(self,cell='Macrophage',do_plot=True,title="Kaplan-Meier Plot",scale=4):
         concat_value_df = self.concat_value_df.dropna()
         cell_value = sorted(concat_value_df[cell].tolist())
-        lower_threshold = cell_value[len(concat_value_df)//5]
-        upper_threshold = cell_value[-(len(concat_value_df)//5)]
+        lower_threshold = cell_value[len(concat_value_df)//scale]
+        upper_threshold = cell_value[-(len(concat_value_df)//scale)]
 
         def convert(x):
             if x > upper_threshold:
@@ -127,6 +127,7 @@ class TCGA_Analysis():
 
         df1 = concat_value_df[concat_value_df[cell]==1]
         df0 = concat_value_df[concat_value_df[cell]==0]
+        self.concat_final_value = concat_value_df
 
         logger.info('positive samples: {}'.format(len(df1)))
         logger.info('negative samples: {}'.format(len(df0)))
@@ -144,10 +145,15 @@ class TCGA_Analysis():
 
         self.res_log = pd.DataFrame({'log-rank':[p_log],'wilcoxon':[p_wil]})
         if do_plot:
-            plot_curves(concat_value_df,target=[cell])
+            plot_curves(concat_value_df,target=[cell],pvalue=p_log,title=title)
 
 
-def plot_curves(df,target=[""]):
+def plot_curves(df,target=[""],pvalue=None,title="Kaplan-Meier Plot"):
+    if pvalue < 0.01:
+        pvalue = '{:.2e}'.format(pvalue)
+    else:
+        pvalue = round(pvalue,3)
+    fig,ax = plt.subplots(dpi=300)
     lst = ["OS_Time","OS_Status"]+target
     df = df.loc[:,lst]
     cph = fit.coxph_fitter.CoxPHFitter()
@@ -157,25 +163,30 @@ def plot_curves(df,target=[""]):
         plot_once(df,target[0])
     else:
         cph.plot_partial_effects_on_outcome(target, all_list(target))
-    plt.title("Kaplan-Meier Plot")
+    #plt.text(0.05,1.0,"$\it{P}$ = {}".format(str(pvalue)), transform=ax.transAxes, fontsize=10)
+    plt.text(0.05,0.2,'$\it{P}$'+' = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=10) # for BRCA
+    plt.title(title)
     plt.xlabel("Time (days)")
-    plt.ylabel("Survival Rate (/)")
+    plt.ylabel("Survival Probability")
     plt.show()
     return
 
-def plot_once(df,target):
+def plot_once(df,target,label_list=['Low (bottom 25%)','High (top 25%)']):
     ax = None
     for i, group in df.groupby(target):
         kmf = KMF()
-        kmf.fit(group['OS_Time'], event_observed=group['OS_Status'],
-                label = str(target) + ':' + str(i))
+        if len(label_list)==0:
+            kmf.fit(group['OS_Time'], event_observed=group['OS_Status'],label = str(target) + ':' + str(i))
+        else:
+            kmf.fit(group['OS_Time'], event_observed=group['OS_Status'],label = label_list[i])
+            
         if ax is None:
             ax = kmf.plot()
         else:
             ax = kmf.plot(ax=ax)
 
 
-def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['BRCA','LUAD','LIHC'],title='Cell Proportions',show_name=True):
+def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0.7802]],labels=['Neutrophils', 'Monocytes', 'NK', 'Kupffer'],conditions=['BRCA','LUAD','LIHC'],title='Cell Proportions',show_name=True,figsize=(6,6),dpi=100):
     # preprocessing
     dft = pd.DataFrame(data,index=conditions,columns=labels).T
     pred = KMeans(n_clusters=len(conditions)).fit_predict(dft)
@@ -193,7 +204,7 @@ def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0
     angles += angles[:1]
 
     # ax = plt.subplot(polar=True)
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True), dpi=100)
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True), dpi=dpi)
 
     # Helper function to plot each car on the radar chart.
     def add_to_radar(name, color):
@@ -235,5 +246,5 @@ def plot_radar(data=[[0.3821, 0.6394, 0.8317, 0.7524],[0.4908, 0.7077, 0.8479, 0
     ax.spines['polar'].set_color('#222222')
     ax.set_facecolor('#FAFAFA')
     ax.set_title(title, y=1.1, fontsize=15)
-    ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
+    ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1.1),fontsize=15)
     plt.show()
