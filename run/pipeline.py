@@ -21,16 +21,17 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
-Base_dir = '/workspace/github/GLDADec' # cloning repository
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+print(BASE_DIR)
+
 import sys
-sys.path.append(Base_dir)
+sys.path.append(BASE_DIR)
 
 from run import dev0_preprocessing
 from run import dev1_set_data
-from run import dev2_anchor_detection
-from run import dev3_deconvolution
-from run import dev4_evaluation
-from gldadec import utils
+from run import dev2_deconvolution
+from run import dev3_evaluation
 from _utils import processing, plot_utils
 
 #%%
@@ -49,7 +50,8 @@ class Pipeline():
         """
         You can skip below 1.set_data() and 2.sample_selection()
         """
-        # TODO: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
+        # WARNING: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
+
         PP = dev0_preprocessing.PreProcessing()
         PP.set_data(mix_raw=mix_raw,ann_ref=ann_ref,batch_info=batch_info)
         PP.sample_selection(target_samples=target_samples)
@@ -159,13 +161,13 @@ class Pipeline():
         self.other_genes = sorted(list(set(self.added_df.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
         logger.info('target_cells: {}, n_genes: {}'.format(target_cells,len(target_genes)))
 
-    # FIXME: below 'prior_info_norm' method is included in 'deconv_prep' method.
+    # below 'prior_info_norm' method is included in 'deconv_prep' method.
     def prior_info_norm(self,scale=1000,norm=True):
         """
         Allowing duplication of marker genes does not work well.
         """
         if norm:
-            linear_norm = utils.freq_norm(self.added_df,self.target_dic)
+            linear_norm = processing.freq_norm(self.added_df,self.target_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             self.deconv_df = linear_norm/scale
         else:
@@ -208,6 +210,21 @@ class Pipeline():
         gc.collect()
     
     def deconv(self,n=100,add_topic=0,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=True):
+        """_summary_
+
+        Args:
+            n (int, optional): The number of ensembles. Defaults to 100.
+            add_topic (int, optional): The number of additional empty topics. Defaults to 0.
+            n_iter (int, optional): The number of iterations for each run. Defaults to 100.
+            alpha (float, optional): A hyperparameter for Dirichlet distribution. Defaults to 0.01.
+            eta (float, optional): A hyperparameter for Dirichlet distribution.. Defaults to 0.01.
+            refresh (int, optional): _description_. Defaults to 10.
+            initial_conf (float, optional): _description_. Defaults to 1.0.
+            seed_conf (float, optional): _description_. Defaults to 1.0.
+            other_conf (float, optional): _description_. Defaults to 0.0.
+            ll_plot (bool, optional): _description_. Defaults to True.
+            var_plot (bool, optional): _description_. Defaults to True.
+        """
         if self.mm_df is None:
             deconv_df = self.final_int
         else:
@@ -221,8 +238,8 @@ class Pipeline():
             re_order = random.sample(original_order,len(original_order)) # randomly sort the gene order
             mm_target = deconv_df.loc[re_order]
             # conduct deconvolution
-            # dev3
-            Dec = dev3_deconvolution.Deconvolution(verbose=False)
+            # dev2
+            Dec = dev2_deconvolution.Deconvolution(verbose=False)
             Dec.set_marker(marker_final_dic=self.marker_final_dic,anchor_dic=self.marker_final_dic)
             Dec.marker_redefine()
             Dec.set_random(random_sets=[123])
@@ -288,17 +305,17 @@ class Pipeline():
         PBMCs, 17-027    11.62      4.16  20.37  ...           7.55  14.18      10.47
 
         """
-        Eval = dev4_evaluation.Evaluation()
+        Eval = dev3_evaluation.Evaluation()
         # normalize
         if len(deconv_norm_range)==0:
             self.norm_res = self.merge_total_res
         else:
-            self.norm_res = utils.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
+            self.norm_res = processing.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
         
         if len(facs_norm_range)==0:
             norm_facs = facs_df
         else:
-            norm_facs = utils.norm_val(val_df=facs_df,base_names=facs_norm_range)
+            norm_facs = processing.norm_val(val_df=facs_df,base_names=facs_norm_range)
         
         # evaluation
         Eval.set_res(total_res=self.norm_res,z_norm=False)
@@ -318,6 +335,17 @@ class Pipeline():
         logger.info('facs_names: {}'.format(ref_names))
     
     def add_profile_eval(self,add_topic=10,topn=None,alternative='less',do_plot=True):
+        """_summary_
+
+        Args:
+            add_topic (int, optional): _description_. Defaults to 10.
+            topn (_type_, optional): _description_. Defaults to None.
+            alternative (str, optional): _description_. Defaults to 'less'.
+            do_plot (bool, optional): _description_. Defaults to True.
+
+        Returns:
+            _type_: _description_
+        """
         if alternative not in ['less','greater']:
             raise ValueError('!! Inappropriate alternative setting !!')
 
@@ -330,7 +358,15 @@ class Pipeline():
         overlap = False
         for t in gcr:
             sorted_genes = sorted(t[0].index.tolist())
-            gc_df = t[0].loc[sorted_genes]
+            gc_df = t[0].loc[sorted_genes] # gene contribution to each topic (cell).
+            """
+            	    Hepatocyte	Dendritic cell	Hepatoblast	... 1	        2
+            ZFP950	0.000203	0.000203	    0.000203	... 0.994118	0.000203
+            ARL4D	0.000169	0.000169	    0.320573	... 0.000169	0.000169
+            PVR	    0.000330	0.000330	    0.000330	... 0.000330	0.000330
+            SLCO1A4	0.000125	0.000125	    0.000125	... 0.000125	0.000125
+            AFM	    0.000080	0.191620	    0.000080	... 0.000080	0.000080
+            """
             add_gc = gc_df[[i+1 for i in range(add_topic)]] # added topics
             other_genes = self.other_genes
             add_gc_other = add_gc.loc[other_genes] # added gene contribution to added topics
@@ -385,58 +421,3 @@ class Pipeline():
 
         logger.info('overlap: {}, pvalue: {}'.format(overlap,pval_flag))
         return overlap, pval_flag, min_p_list, max_p_list
-
-    def add_profile_eval_legacy(self,add_topic=10,topn=None):
-        gcr = self.gene_contribution_res
-        # summarize gene contributions
-        # FIXME: Each additional topic may not be equivalent
-        l = []
-        for t in gcr:
-            sorted_genes = sorted(t[0].index.tolist())
-            gc_df = t[0].loc[sorted_genes]
-            l.append(gc_df)
-        gc_m = sum(l)/len(l)
-        add_gc = gc_m[[i+1 for i in range(add_topic)]] # added topics
-        other_genes = self.other_genes
-        add_gc_other = add_gc.loc[other_genes] # added gene contribution to added topics
-        if topn is None:
-            topn = int(len(add_gc_other)/add_topic/10) # soft threshold
-
-        target_genes = []
-        for t in add_gc_other.columns.tolist():
-            tmp_df = add_gc_other[[t]].sort_values(t,ascending=False)
-            top_genes = tmp_df.index.tolist()[0:topn] # high contribution to the topic
-            target_genes.extend(top_genes)
-        target_gc_other = add_gc_other.loc[sorted(list(set(target_genes)))]
-
-        # overlap eval
-        if len(target_gc_other) != len(target_genes):
-            overlap = True
-        else:
-            overlap = False
-        
-        # correlation eval
-        fig, axes = plt.subplots(1, 2, figsize=(15, 6), sharex=True, sharey=True)
-        cor = target_gc_other.corr()
-        sns.heatmap(cor,ax=axes[0],annot=True,fmt="1.2f")
-
-        cor = cor.replace(1,-1)
-        cor_max = cor.max().max()
-        if cor_max > 0:
-            posi_cor = True
-        else:
-            posi_cor = False
-
-        # pvalue eval
-        pval = target_gc_other.corr(method=lambda x, y: pearsonr(x, y,alternative='greater')[1])
-        sns.heatmap(pval,ax=axes[1],annot=True,fmt="1.1e",cmap='cividis',annot_kws={"fontsize":6})
-        plt.show()
-
-        min_pvalue = pval.min().min()
-        if min_pvalue < 0.05:
-            posi_pvalue = True
-        else:
-            posi_pvalue = False
-
-        logger.info('overlap: {}, positive_correlation: {}'.format(overlap,posi_cor))
-        return overlap, posi_pvalue

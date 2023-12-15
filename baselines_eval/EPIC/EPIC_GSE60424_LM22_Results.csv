@@ -1,6 +1,0 @@
-0,B cells naive,B cells memory,Plasma cells,T cells CD8,T cells CD4 naive,T cells CD4 memory resting,T cells CD4 memory activated,T cells follicular helper,T cells regulatory (Tregs),T cells gamma delta,NK cells resting,NK cells activated,Monocytes,Macrophages M0,Macrophages M1,Macrophages M2,Dendritic cells resting,Dendritic cells activated,Mast cells resting,Mast cells activated,Eosinophils,Neutrophils,otherCells
-LIB222,0,0.0598,0.0016,0.0463,0.0145,0.0022,0,0,0.0883,0,0,0,0.0073,0,0,0,0,0,0,0,0,0.78,0
-LIB272,3e-04,0.0061,0.0094,0,0,0.0014,0,0,0,0.0032,0.0027,0,0.0513,0,0,0,0,0,0.0123,0,0,0.9132,0
-LIB341,0.017,0.109,0.0248,0.0326,0.0359,9e-04,1e-04,0.0046,0.0511,0,1e-04,0,0.0044,0,0,0,0,0,0,0,0,0.7194,0
-LIB259,4e-04,0.0077,0,0.0074,4e-04,2e-04,0,1e-04,0.0018,0.0046,0.0232,1e-04,0.0267,0,0,0,0,0,0,0,0,0.9273,0
-LIB315,0.0044,0.0423,0.0086,0.0453,0.0019,0.0035,0,0.0034,0.0172,6e-04,8e-04,0.007,0.005,0,0,0.0037,0,0,0,0,0,0.8563,0
