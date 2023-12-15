@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from gldadec import utils
+from _utils import processing
 
 class SetData():
     def __init__(self,verbose=True):
@@ -178,7 +178,7 @@ class SetData():
 
         # prior information normalization
         if prior_norm:
-            linear_norm = utils.freq_norm(target_df,self.marker_final_dic)
+            linear_norm = processing.freq_norm(target_df,self.marker_final_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             final_df = linear_norm/norm_scale
         else:
@@ -308,30 +308,3 @@ class SetData():
             print('seed number:',len(self.seed_topics))
             print("seed_k:",len(self.seed_k))
 
-def main():
-    raw_df = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/GSE65133_expression.csv',index_col=0)
-    marker_dic = pd.read_pickle('/mnt/AzumaDeconv/github/GLDADec/data/domain_info/human_PBMC_CellMarker_8cell_raw_dic_v1.pkl')
-    random_sets = pd.read_pickle('/mnt/AzumaDeconv/github/GLDADec/data/random_info/100_random_sets.pkl')
-
-    SD = SetData()
-    SD.set_expression(df=raw_df) 
-    SD.set_marker(marker_dic=marker_dic)
-    SD.marker_info_processing(do_plot=True)
-    SD.set_random(random_sets=random_sets)
-    SD.expression_processing(random_n=0,specific=True)
-    SD.seed_processing()
-    
-    # Collect data to be used in later analyses
-    input_mat = SD.input_mat
-    final_int = SD.final_int
-    seed_topics = SD.seed_topics
-    marker_final_dic = SD.marker_final_dic
-    
-    # save
-    out_path = '/mnt/AzumaDeconv/github/GLDADec/Dev/test_data/'
-    pd.to_pickle(final_int,out_path+'final_int.pkl')
-    pd.to_pickle(seed_topics,out_path+'seed_topics.pkl')
-    pd.to_pickle(marker_final_dic,out_path+'marker_final_dic.pkl')
-
-if __name__ == '__main__':
-    main()

@@ -21,16 +21,17 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
-Base_dir = '/workspace/github/GLDADec' # cloning repository
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+print(BASE_DIR)
+
 import sys
-sys.path.append(Base_dir)
+sys.path.append(BASE_DIR)
 
 from run import dev0_preprocessing
 from run import dev1_set_data
-from run import dev2_anchor_detection
-from run import dev3_deconvolution
-from run import dev4_evaluation
-from gldadec import utils
+from run import dev2_deconvolution
+from run import dev3_evaluation
 from _utils import processing, plot_utils
 
 #%%
@@ -49,7 +50,8 @@ class Pipeline():
         """
         You can skip below 1.set_data() and 2.sample_selection()
         """
-        # TODO: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
+        # WARNING: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
+
         PP = dev0_preprocessing.PreProcessing()
         PP.set_data(mix_raw=mix_raw,ann_ref=ann_ref,batch_info=batch_info)
         PP.sample_selection(target_samples=target_samples)
@@ -159,13 +161,13 @@ class Pipeline():
         self.other_genes = sorted(list(set(self.added_df.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
         logger.info('target_cells: {}, n_genes: {}'.format(target_cells,len(target_genes)))
 
-    # FIXME: below 'prior_info_norm' method is included in 'deconv_prep' method.
+    # below 'prior_info_norm' method is included in 'deconv_prep' method.
     def prior_info_norm(self,scale=1000,norm=True):
         """
         Allowing duplication of marker genes does not work well.
         """
         if norm:
-            linear_norm = utils.freq_norm(self.added_df,self.target_dic)
+            linear_norm = processing.freq_norm(self.added_df,self.target_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             self.deconv_df = linear_norm/scale
         else:
@@ -236,8 +238,8 @@ class Pipeline():
             re_order = random.sample(original_order,len(original_order)) # randomly sort the gene order
             mm_target = deconv_df.loc[re_order]
             # conduct deconvolution
-            # dev3
-            Dec = dev3_deconvolution.Deconvolution(verbose=False)
+            # dev2
+            Dec = dev2_deconvolution.Deconvolution(verbose=False)
             Dec.set_marker(marker_final_dic=self.marker_final_dic,anchor_dic=self.marker_final_dic)
             Dec.marker_redefine()
             Dec.set_random(random_sets=[123])
@@ -303,17 +305,17 @@ class Pipeline():
         PBMCs, 17-027    11.62      4.16  20.37  ...           7.55  14.18      10.47
 
         """
-        Eval = dev4_evaluation.Evaluation()
+        Eval = dev3_evaluation.Evaluation()
         # normalize
         if len(deconv_norm_range)==0:
             self.norm_res = self.merge_total_res
         else:
-            self.norm_res = utils.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
+            self.norm_res = processing.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
         
         if len(facs_norm_range)==0:
             norm_facs = facs_df
         else:
-            norm_facs = utils.norm_val(val_df=facs_df,base_names=facs_norm_range)
+            norm_facs = processing.norm_val(val_df=facs_df,base_names=facs_norm_range)
         
         # evaluation
         Eval.set_res(total_res=self.norm_res,z_norm=False)
