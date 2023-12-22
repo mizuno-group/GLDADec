@@ -3,15 +3,13 @@
 """
 Created on Tue Dec 27 13:13:14 2022
 
+Performance evaluation class for deconvolution.
+
 @author: docker
 """
 import pandas as pd
 from matplotlib import colors as mcolors
 tab_colors = mcolors.TABLEAU_COLORS
-
-import sys
-from pathlib import Path
-BASE_DIR = Path(__file__).parent
 
 from _utils import plot_utils, processing
 
@@ -36,7 +34,7 @@ class Evaluation():
             self.ensemble_res = processing.standardz_sample(sum_res) # sample-wide
         else:
             self.ensemble_res = sum_res
-        print('cells in res :',self.ensemble_res.columns.tolist()) # TODO : add logging
+        print('cells in res :',self.ensemble_res.columns.tolist())
         
     def set_ref(self,ref_df,z_norm=True):
         """
@@ -60,7 +58,7 @@ class Evaluation():
         else:
             ref_df = ref_df.loc[self.samples]
             self.ref_df = ref_df
-        print('cells in ref :',self.ref_df.columns.tolist()) # TODO : add logging
+        print('cells in ref :',self.ref_df.columns.tolist())
     
     #%% main
     def multi_eval(self,
@@ -107,19 +105,3 @@ class Evaluation():
             performance_list.append(list(performance.items()))
         
         self.performance_dic = dict(zip(title_list,performance_list))
-    
-def main():
-    target_facs = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/facs_results.csv',index_col=0)
-    in_path = '/mnt/AzumaDeconv/Topic_Deconv/GuidedLDA/221027_GSE65133/221101_CellMarker/221229_threshold_impact/results/'
-    total_res = pd.read_pickle(in_path + '/total_res_original.pkl')
-    
-    Eval = Evaluation()
-    Eval.set_res(total_res=total_res,z_norm=True)
-    Eval.set_ref(ref_df=target_facs,z_norm=True)
-    
-    #Eval.evaluate(res_name='B cells naive',ref_name='Naive B')
-    Eval.multi_eval(res_names=[['B cells naive'],['B cells memory'],['T cells CD4 naive'],['T cells CD4 memory'],['T cells CD8'],['NK cells'],['Monocytes'],['T cells gamma delta']],
-    ref_names=[['Naive B'],['Memory B'],['Naive CD4 T'],['Resting memory CD4 T', 'Activated memory CD4 T'],['CD8 T'],['NK'],['Monocytes'],['Gamma delta T']])
-    
-if __name__ == '__main__':
-    main()

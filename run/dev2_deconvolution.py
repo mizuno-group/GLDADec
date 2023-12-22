@@ -3,6 +3,8 @@
 """
 Created on Sun Dec 25 16:16:03 2022
 
+Deconvolution core class.
+
 @author: docker
 """
 import gc
@@ -13,9 +15,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import sys
 from pathlib import Path
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
+
+import sys
+sys.path.append(str(BASE_DIR))
 
 from gldadec import glda_deconv
 
@@ -25,7 +29,16 @@ class Deconvolution():
         self.marker_final_dic = None
         self.anchor_dic = None
     
-    def set_marker(self,marker_final_dic,anchor_dic):
+    def set_marker(self,marker_final_dic:dict,anchor_dic:dict):
+        """ Refine prior information with more reliable anchor genes.
+        
+        Args:
+            marker_final_dic (dict): _description_
+            anchor_dic (dict): Particularly reliable ones out of marker_final_dic.
+
+        In the original paper, all marker genes are considered anchors, and this manipulation is invalid.
+        This might be useful if there are genes among the acquired markers that you want to focus on.
+        """
         self.marker_final_dic = marker_final_dic
         self.anchor_dic = anchor_dic
         
@@ -82,6 +95,12 @@ class Deconvolution():
             print(b,'samples')
     
     def expression_processing(self,random_n=0,random_genes=None):
+        """ You can add randomly selected genes. Effects other than marker genes are considered without arbitrariness.
+
+        Args:
+            random_n (int, optional): The number of genes to be added randomly. Defaults to 0.
+            random_genes (list, optional): A list of specific genes you would like to add. Defaults to None.
+        """
         raw_df = copy.deepcopy(self.raw_df)
         genes = list(itertools.chain.from_iterable(list(self.marker_final_dic.values()))) # marker genes
         if random_genes is None:
@@ -95,7 +114,7 @@ class Deconvolution():
             print(len(random_genes),'genes were added at random')
         
         union = sorted(list(set(random_genes) | set(genes)))
-        # FIXME: gene order might affect the estimation results
+        # NOTE: gene order might affect the estimation results
         common = sorted(list(set(raw_df.index.tolist()) & set(union)))
         final_df = raw_df.loc[common]
         self.final_int_dec = final_df.astype(int) # convert int
@@ -107,7 +126,8 @@ class Deconvolution():
     
     def set_final_int(self,final_int):
         """
-        You can skip the 'set_expression()' >> 'expresison_processing()'
+        Directly input the expression levels for the analysis.
+        You can skip the 'set_expression()' >> 'expresison_processing()' with this step.
         ----------
         final_int : pd.DataFrame
                    PBMCs, 17-002  PBMCs, 17-006  ...  PBMCs, 17-060  PBMCs, 17-061
@@ -182,7 +202,6 @@ class Deconvolution():
         seed_k = []
         for g in genes:
             if self.gene2id.get(g) is None:
-                #print(g)
                 pass
             else:
                 seed_k.append(self.gene2id.get(g))
@@ -198,9 +217,8 @@ class Deconvolution():
             print("seed_k:",len(self.seed_k))
     
     def conduct_deconv(self,add_topic=0,n_iter=200,alpha=0.01,eta=0.01,random_state=123,refresh=10):
-        """
-        Parameters
-        ----------
+        """ Single Run.
+
         add_topic : int
             The number of additional cells to be assumed in addition to the cells with markers. The default is 0.
         n_iter : int
@@ -211,9 +229,8 @@ class Deconvolution():
             Parameter of LDA. The default is 0.01.
         random_state : int
             The default is 123.
-        refresh : TYPE, optional
+        refresh : int
             Interval for obtaining log-likelihood. The default is 10.
-
         """
         target = list(self.marker_dec_dic.keys())
         input_mat = self.input_mat_dec
@@ -229,8 +246,8 @@ class Deconvolution():
             random_state=random_state,
             refresh=refresh
             )
-        
-        model.fit(input_mat,seed_topics=seed_topics,initial_conf=1.0,seed_conf=0.0,other_conf=0.0,fix_seed_k=True,seed_k=seed_k) # free to move
+        # perform the deconvolution model
+        model.fit(input_mat,seed_topics=seed_topics,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,fix_seed_k=True,seed_k=seed_k) 
         # plot log-likelihood
         ll = model.loglikelihoods_
         x = [i*refresh for i in range(len(ll))]
@@ -255,6 +272,28 @@ class Deconvolution():
         gc.collect()
     
     def ensemble_deconv(self,add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,fix_seed_k=True,verbose=False):
+        """ Ensemble learning with random numbers.
+
+        add_topic : int
+            The number of additional cells to be assumed in addition to the cells with markers. The default is 0.
+        n_iter : int
+            The number of iterations. The default is 200.
+        alpha : float
+            Parameter of LDA. The default is 0.01.
+        eta : float
+            Parameter of LDA. The default is 0.01.
+        refresh : int
+            Interval for obtaining log-likelihood. The default is 10.
+        initial_conf : float
+            Probability of using prior information for guiding (initialization). The default is 1.0.
+        seed_conf : float
+            Probability of maintaining guiding during the learning process. The default is 1.0.
+        other_conf : float
+            Probability of retaining unguided genes to the topic. The default is 0.0.
+        fix_seed_k : bool
+            Whether seed_k is used as prior information or not. If false, the cell-specific markers are automatically recognized and seed_k is generated. The default is True.
+
+        """
         target = list(self.marker_dec_dic.keys())
         input_mat = self.input_mat_dec
         seed_topics = self.seed_topics
@@ -299,7 +338,6 @@ class Deconvolution():
             gc_df.columns = new_target
             init_df.index = new_target
 
-            #norm_res = pc.standardz_sample(res) # sample-wide
             total_res.append(res)
             total_res2.append(init_df)
             gene_contribution.append(gc_df)
@@ -316,18 +354,23 @@ class Deconvolution():
 
         
 def main():
-    in_path = '/mnt/AzumaDeconv/github/GLDADec/Dev/test_data/'
-    raw_df = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/GSE65133_expression.csv',index_col=0)
-    random_sets = pd.read_pickle('/mnt/AzumaDeconv/github/GLDADec/data/random_info/10_random_sets.pkl')
-    marker_final_dic = pd.read_pickle(in_path+'marker_final_dic.pkl')
-    anchor_dic = pd.read_pickle('/mnt/AzumaDeconv/Topic_Deconv/GuidedLDA/221027_GSE65133/221101_CellMarker/221229_threshold_impact/results/anchor_list/anchor_dic_rel10_v1.pkl')
+    BASE_DIR = '/workspace/github/GLDADec'
+    SET_DIRECT = True
+    raw_df = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_expression.csv',index_col=0)
+    final_int = pd.read_csv('/path/to/final_int.csv',index_col=0) # You can obtain the final marker via 'dev1_set_data.py'.
+    marker_final_dic = pd.read_pickle('/path/to/marker_final_dic.pkl') # You can obtain the final marker via 'dev1_set_data.py'.
+    random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/10_random_sets.pkl')
     
     Dec = Deconvolution()
-    Dec.set_marker(marker_final_dic=marker_final_dic,anchor_dic=marker_final_dic)
+    Dec.set_marker(marker_final_dic=marker_final_dic,anchor_dic=marker_final_dic) # All marker genes are considered reliable and treated as anchors.
     Dec.marker_redefine()
-    Dec.set_expression(df=raw_df)
     Dec.set_random(random_sets=random_sets)
-    Dec.expression_processing(random_n=0)
+    if SET_DIRECT:
+        Dec.set_final_int(final_int=final_int)
+    else:
+        Dec.set_expression(df=raw_df)
+        Dec.expression_processing(random_n=0)
+    
     Dec.seed_processing()
     #Dec.conduct_deconv(add_topic=0,n_iter=200,alpha=0.01,eta=0.01,random_state=123,refresh=10)
     Dec.ensemble_deconv(add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10)
@@ -336,8 +379,7 @@ def main():
     anchor_dec_dic = Dec.anchor_dec_dic
     
     total_res = Dec.total_res
-    out_path = '/mnt/AzumaDeconv/Topic_Deconv/GuidedLDA/221027_GSE65133/221101_CellMarker/221229_threshold_impact/results/'
-    pd.to_pickle(total_res,out_path+'total_res_original.pkl')
+    print(total_res[0].shape)
     
 if __name__ == '__main__':
     main()

@@ -3,6 +3,13 @@
 """
 Created on Fri Dec 23 06:14:31 2022
 
+Input data for deconvolution.
+1. Input raw gene expression data.
+2. Set marker genes information.
+3. Refine marker genes according to the target data.
+4. Final processing of expression data.
+5. Preparation of prior information for topic guiding.
+
 @author: docker
 """
 import copy
@@ -13,7 +20,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from gldadec import utils
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+
+import sys
+sys.path.append(str(BASE_DIR))
+
+from _utils import processing
 
 class SetData():
     def __init__(self,verbose=True):
@@ -43,6 +56,7 @@ class SetData():
         Set marker list for each cell
         ----------
         marker_dic : dict
+            e.g. {'Cell A': ['gene A1', 'gene A2'],'Cell B': ['gene B1', 'gene B2'],...}
             
         """
         # convert uppercase
@@ -145,9 +159,9 @@ class SetData():
         3. Process expression data into a format for analysis
         ----------
         random_n : int
-            DESCRIPTION. The default is 0.
+            Number of genes to be added randomly. The default is 0.
         specific : bool
-            DESCRIPTION. The default is True.
+            Whether or not to select only cell-specific markers. The default is True.
         """
         if specific:
             if self.verbose:
@@ -178,12 +192,12 @@ class SetData():
 
         # prior information normalization
         if prior_norm:
-            linear_norm = utils.freq_norm(target_df,self.marker_final_dic)
+            linear_norm = processing.freq_norm(target_df,self.marker_final_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             final_df = linear_norm/norm_scale
         else:
             final_df = target_df/norm_scale
-        self.final_int = final_df.astype(int) # convert int
+        self.final_int = final_df.astype(int)
         self.input_mat = np.array(self.final_int.T,dtype='int64')
 
         # seed-topic preparation
@@ -191,56 +205,9 @@ class SetData():
         self.gene2id = dict((v, idx) for idx, v in enumerate(gene_names))
         self.random_genes = random_genes
     
-    def expression_processing2(self,specific=True):
-        """
-        1. Determine if the markers are cell specific.
-        2. Add non-marker gene at random to each topic.
-        3. Process expression data into a format for analysis
-        ----------
-        specific : bool
-            DESCRIPTION. The default is True.
-        """
-        if specific:
-            if self.verbose:
-                print('use specific markers')
-            self.marker_final_dic = self.spe_marker_dic
-        else:
-            if self.verbose:
-                print('use overlap markers')
-            self.marker_final_dic = self.marker_dic
-        
-        marker_final_dic = copy.deepcopy(self.marker_final_dic)
-        genes = list(itertools.chain.from_iterable(list(marker_final_dic.values()))) # marker genes
-        raw_df = copy.deepcopy(self.raw_df)
-
-        random_list = []
-        new_list = []
-        for i,k in enumerate(marker_final_dic):
-            m = marker_final_dic.get(k)
-            random_candidates = sorted(list(set(raw_df.index.tolist()) - set(genes))) # total genes - marker genes
-            random.seed(i)
-            random_gene = random.sample(random_candidates,len(m))
-            m.extend(random_gene)
-            new_list.append(sorted(m))
-            random_list.append(random_gene)
-            genes.extend(random_gene)
-        new_dic = dict(zip(list(marker_final_dic.keys()), new_list))
-        # FIXME: overwrite
-        self.marker_final_dic = new_dic
-        
-        common = list(itertools.chain.from_iterable(list(new_dic.values()))) # marker genes
-        final_df = raw_df.loc[common]
-        self.final_int = final_df.astype(int) # convert int
-        self.input_mat = np.array(self.final_int.T,dtype='int64')
-
-        # seed-topic preparation
-        gene_names = [t.upper() for t in self.final_int.index.tolist()]
-        self.gene2id = dict((v, idx) for idx, v in enumerate(gene_names))
-        #self.random_genes = random_genes
-    
     def seed_processing(self):
         """
-        Prepare seed information for use as a guide.
+        Prepare seed information for guiding each topic. These are used as prior information.
         
         input_mat : np.array
             samples are in rows and genes (markers) are in columns.
@@ -289,12 +256,11 @@ class SetData():
                     print(gene)
                     pass
                 
-        # reliable gene
+        # reliable marker genes to guide
         genes = list(itertools.chain.from_iterable(list(self.marker_final_dic.values())))
         seed_k = []
         for g in genes:
             if self.gene2id.get(g) is None:
-                #print(g)
                 pass
             else:
                 seed_k.append(self.gene2id.get(g))
@@ -309,11 +275,12 @@ class SetData():
             print("seed_k:",len(self.seed_k))
 
 def main():
-    raw_df = pd.read_csv('/mnt/AzumaDeconv/github/GLDADec/data/GSE65133/GSE65133_expression.csv',index_col=0)
-    marker_dic = pd.read_pickle('/mnt/AzumaDeconv/github/GLDADec/data/domain_info/human_PBMC_CellMarker_8cell_raw_dic_v1.pkl')
-    random_sets = pd.read_pickle('/mnt/AzumaDeconv/github/GLDADec/data/random_info/100_random_sets.pkl')
+    BASE_DIR = '/workspace/github/GLDADec'
+    raw_df = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_expression.csv',index_col=0)
+    marker_dic = pd.read_pickle(BASE_DIR+'/data/expression/mouse_dili/liver_merged_35_dic.pkl')
+    random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/100_random_sets.pkl')
 
-    SD = SetData()
+    SD = SetData(verbose=False)
     SD.set_expression(df=raw_df) 
     SD.set_marker(marker_dic=marker_dic)
     SD.marker_info_processing(do_plot=True)
@@ -326,12 +293,6 @@ def main():
     final_int = SD.final_int
     seed_topics = SD.seed_topics
     marker_final_dic = SD.marker_final_dic
-    
-    # save
-    out_path = '/mnt/AzumaDeconv/github/GLDADec/Dev/test_data/'
-    pd.to_pickle(final_int,out_path+'final_int.pkl')
-    pd.to_pickle(seed_topics,out_path+'seed_topics.pkl')
-    pd.to_pickle(marker_final_dic,out_path+'marker_final_dic.pkl')
 
 if __name__ == '__main__':
     main()

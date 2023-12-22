@@ -2,7 +2,14 @@
 """
 Created on 2023-05-09 (Tue) 10:00:47
 
-Pipeline for comprehensive analysis
+Pipeline for a series of analyses.
+
+1. Input expression data, sample selection, and preprocessing.
+2. Selection of genes with high variability for analysis.
+3. Input marker genes to be used as prior information.
+4. Condition setting for deconvolution.
+5. Performing GLDADec.
+6. Evaluate by comparing the estimated value with the true value measured by flow cytometry.
 
 @author: I.Azuma
 """
@@ -21,19 +28,18 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
-Base_dir = '/workspace/github/GLDADec' # cloning repository
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent
+
 import sys
-sys.path.append(Base_dir)
+sys.path.append(str(BASE_DIR))
 
 from run import dev0_preprocessing
 from run import dev1_set_data
-from run import dev2_anchor_detection
-from run import dev3_deconvolution
-from run import dev4_evaluation
-from gldadec import utils
+from run import dev2_deconvolution
+from run import dev3_evaluation
 from _utils import processing, plot_utils
 
-#%%
 logger = logging.getLogger('pipeline')
 
 #%%
@@ -47,9 +53,9 @@ class Pipeline():
     def from_predata(self,mix_raw,ann_ref=None,batch_info=None,target_samples=['Ctrl','APAP'],
                     do_ann=True,log2linear=False,linear2log=False,do_drop=True,do_batch_norm=True,do_quantile=True,remove_noise=False):
         """
-        You can skip below 1.set_data() and 2.sample_selection()
+        You can skip below 1.set_data() and 2.sample_selection() by performing this module.
         """
-        # TODO: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
+        # WARNING: log2linear may lead to OverflowError ('Numerical result out of range'). Monitor and warn of scale.
         PP = dev0_preprocessing.PreProcessing()
         PP.set_data(mix_raw=mix_raw,ann_ref=ann_ref,batch_info=batch_info)
         PP.sample_selection(target_samples=target_samples)
@@ -159,13 +165,13 @@ class Pipeline():
         self.other_genes = sorted(list(set(self.added_df.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
         logger.info('target_cells: {}, n_genes: {}'.format(target_cells,len(target_genes)))
 
-    # FIXME: below 'prior_info_norm' method is included in 'deconv_prep' method.
+    # NOTE: below 'prior_info_norm' method is included in 'deconv_prep' method.
     def prior_info_norm(self,scale=1000,norm=True):
         """
         Allowing duplication of marker genes does not work well.
         """
         if norm:
-            linear_norm = utils.freq_norm(self.added_df,self.target_dic)
+            linear_norm = processing.freq_norm(self.added_df,self.target_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             self.deconv_df = linear_norm/scale
         else:
@@ -236,8 +242,7 @@ class Pipeline():
             re_order = random.sample(original_order,len(original_order)) # randomly sort the gene order
             mm_target = deconv_df.loc[re_order]
             # conduct deconvolution
-            # dev3
-            Dec = dev3_deconvolution.Deconvolution(verbose=False)
+            Dec = dev2_deconvolution.Deconvolution(verbose=False)
             Dec.set_marker(marker_final_dic=self.marker_final_dic,anchor_dic=self.marker_final_dic)
             Dec.marker_redefine()
             Dec.set_random(random_sets=[123])
@@ -303,17 +308,17 @@ class Pipeline():
         PBMCs, 17-027    11.62      4.16  20.37  ...           7.55  14.18      10.47
 
         """
-        Eval = dev4_evaluation.Evaluation()
+        Eval = dev3_evaluation.Evaluation()
         # normalize
         if len(deconv_norm_range)==0:
             self.norm_res = self.merge_total_res
         else:
-            self.norm_res = utils.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
+            self.norm_res = processing.norm_total_res(self.merge_total_res,base_names=deconv_norm_range)
         
         if len(facs_norm_range)==0:
             norm_facs = facs_df
         else:
-            norm_facs = utils.norm_val(val_df=facs_df,base_names=facs_norm_range)
+            norm_facs = processing.norm_val(val_df=facs_df,base_names=facs_norm_range)
         
         # evaluation
         Eval.set_res(total_res=self.norm_res,z_norm=False)
@@ -419,3 +424,36 @@ class Pipeline():
 
         logger.info('overlap: {}, pvalue: {}'.format(overlap,pval_flag))
         return overlap, pval_flag, min_p_list, max_p_list
+
+def main():
+    logging.basicConfig(level=logging.INFO,format="%(asctime)s %(name)s %(levelname)7s %(message)s",filename='/path/to/log.txt', filemode='w')
+
+    BASE_DIR = '/workspace/github/GLDADec'
+    raw_df = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_expression.csv',index_col=0)
+    marker_dic = pd.read_pickle(BASE_DIR+'/data/expression/mouse_dili/liver_merged_35_dic.pkl')
+    random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/100_random_sets.pkl')
+
+    # single run and evaluation
+    pp = Pipeline(verbose=False)
+    pp.from_predata(raw_df,target_samples=['Ctrl', 'APAP'],
+                        do_ann=False,linear2log=False,log2linear=False,do_drop=True,do_batch_norm=False,do_quantile=False)
+    pp.gene_selection(method='CV',outlier=True,topn=1000)
+    pp.add_marker_genes(target_cells=[],add_dic=marker_dic)
+    pp.deocnv_prep(random_sets=random_sets,do_plot=False,specific=True,prior_norm=True,norm_scale=1,minmax=True,mm_scale=10)
+    pp.deconv(n=10,add_topic=3,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=False)
+
+    # evaluation
+    res = pp.merge_total_res
+    target_facs = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_facs.csv',index_col=0)/100
+    pp.evaluate(facs_df=target_facs,deconv_norm_range=['Neutrophil','Monocyte','Natural killer cell','Kupffer cell'],
+                facs_norm_range=['Neutrophil','Monocyte','NK','Kupffer'],
+                res_names=[['Neutrophil'],['Monocyte'],['Natural killer cell'],['Kupffer cell']],
+                ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Kupffer']],
+                title_list = ['Neutrophils','Monocytes','NK','Kupffer'],
+                target_samples = ['Ctrl', 'APAP'],
+                figsize=(6,6),dpi=50,plot_size=100,multi=False)
+
+    print('Overall Correlation:',pp.total_cor)
+
+if __name__ == '__main__':
+    main()
