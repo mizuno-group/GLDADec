@@ -356,7 +356,7 @@ class Deconvolution():
 def main():
     BASE_DIR = '/workspace/github/GLDADec'
     SET_DIRECT = True
-    raw_df = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_expression.csv',index_col=0)
+    raw_df = pd.read_csv(BASE_DIR+'/data/GSE237801/mouse_dili_expression.csv',index_col=0)
     final_int = pd.read_csv('/path/to/final_int.csv',index_col=0) # You can obtain the final marker via 'dev1_set_data.py'.
     marker_final_dic = pd.read_pickle('/path/to/marker_final_dic.pkl') # You can obtain the final marker via 'dev1_set_data.py'.
     random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/10_random_sets.pkl')

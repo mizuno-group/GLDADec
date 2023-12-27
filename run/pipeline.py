@@ -417,8 +417,8 @@ def main():
     logging.basicConfig(level=logging.INFO,format="%(asctime)s %(name)s %(levelname)7s %(message)s",filename='/path/to/log.txt', filemode='w')
 
     BASE_DIR = '/workspace/github/GLDADec'
-    raw_df = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_expression.csv',index_col=0)
-    marker_dic = pd.read_pickle(BASE_DIR+'/data/expression/mouse_dili/liver_merged_35_dic.pkl')
+    raw_df = pd.read_csv(BASE_DIR+'/data/GSE237801/mouse_dili_expression.csv',index_col=0)
+    marker_dic = pd.read_pickle(BASE_DIR+'/data/marker/mouse_liver_CellMarker.pkl')
     random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/100_random_sets.pkl')
 
     # single run and evaluation
@@ -432,7 +432,7 @@ def main():
 
     # evaluation
     res = pp.merge_total_res
-    target_facs = pd.read_csv(BASE_DIR+'/data/expression/mouse_dili/mouse_dili_facs.csv',index_col=0)/100
+    target_facs = pd.read_csv(BASE_DIR+'/data/GSE237801/mouse_dili_facs.csv',index_col=0)/100
     pp.evaluate(facs_df=target_facs,deconv_norm_range=['Neutrophil','Monocyte','Natural killer cell','Kupffer cell'],
                 facs_norm_range=['Neutrophil','Monocyte','NK','Kupffer'],
                 res_names=[['Neutrophil'],['Monocyte'],['Natural killer cell'],['Kupffer cell']],
