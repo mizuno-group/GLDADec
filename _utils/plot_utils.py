@@ -179,7 +179,7 @@ class DeconvPlot():
     
     def overlap_groups(self,evalxy,res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
     ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],title_list=['Naive B','Naive CD4 T','CD8 T','NK','Monocytes'],
-    color_list=None,target_samples=None):
+    color_list=None,target_samples=None,do_plot=True):
         if color_list is None:
             color_list = list(tab_colors.keys())
         # collect information
@@ -202,45 +202,46 @@ class DeconvPlot():
         x_min = min(min(total_x),min(total_y))
         x_max = max(max(total_x),max(total_y))
         
-        fig,ax = plt.subplots(figsize=self.figsize,dpi=self.dpi)
-        for i in range(len(res_names)):
-            res_name = res_names[i]
-            ref_name = ref_names[i]
+        if do_plot:
+            fig,ax = plt.subplots(figsize=self.figsize,dpi=self.dpi)
+            for i in range(len(res_names)):
+                res_name = res_names[i]
+                ref_name = ref_names[i]
 
-            if target_samples is None:
-                res1 = self.deconv_df[res_name].sum(axis=1).tolist()
-                res2 = self.val_df[ref_name].sum(axis=1).tolist()
-                plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color_list[i],label=title_list[i])
-            else:
-                markers1 = ["o", "^", "+", ",", "v",  "<", ">"]
-                for mi,d in enumerate(target_samples):
-                    tmp1 = self.deconv_df.filter(regex="^"+d+"_",axis=0)
-                    tmp2 = self.val_df.filter(regex="^"+d+"_",axis=0)
-                    res1 = tmp1[res_name].sum(axis=1).tolist()
-                    res2 = tmp2[ref_name].sum(axis=1).tolist()
-                    if mi == 0:
-                        plt.scatter(res1,res2,alpha=0.8,s=self.plot_size,c=color_list[i],marker=markers1[mi],label=title_list[i])
-                    else:
-                        plt.scatter(res1,res2,alpha=0.8,s=self.plot_size,c=color_list[i],marker=markers1[mi])
+                if target_samples is None:
+                    res1 = self.deconv_df[res_name].sum(axis=1).tolist()
+                    res2 = self.val_df[ref_name].sum(axis=1).tolist()
+                    plt.scatter(res1,res2,alpha=1.0,s=self.plot_size,c=color_list[i],label=title_list[i])
+                else:
+                    markers1 = ["o", "^", "+", ",", "v",  "<", ">"]
+                    for mi,d in enumerate(target_samples):
+                        tmp1 = self.deconv_df.filter(regex="^"+d+"_",axis=0)
+                        tmp2 = self.val_df.filter(regex="^"+d+"_",axis=0)
+                        res1 = tmp1[res_name].sum(axis=1).tolist()
+                        res2 = tmp2[ref_name].sum(axis=1).tolist()
+                        if mi == 0:
+                            plt.scatter(res1,res2,alpha=0.8,s=self.plot_size,c=color_list[i],marker=markers1[mi],label=title_list[i])
+                        else:
+                            plt.scatter(res1,res2,alpha=0.8,s=self.plot_size,c=color_list[i],marker=markers1[mi])
 
-        plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
-        plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
-        plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
-        plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
-        
-        plt.xlabel(self.xlabel,fontsize=self.label_size)
-        plt.ylabel(self.ylabel,fontsize=self.label_size)
-        plt.xticks(fontsize=self.tick_size)
-        plt.yticks(fontsize=self.tick_size)
-        plt.gca().spines['right'].set_visible(False)
-        plt.gca().spines['top'].set_visible(False)
-        plt.gca().yaxis.set_ticks_position('left')
-        plt.gca().xaxis.set_ticks_position('bottom')
-        ax.set_axisbelow(True)
-        ax.grid(color="#ababab",linewidth=0.5)
-        plt.legend(shadow=True,bbox_to_anchor=(1.0, 1), loc='upper left')
-        #plt.title(title,fontsize=self.label_size)
-        plt.show()
+            plt.plot([x_min,x_max],[x_min,x_max],linewidth=2,color='black',linestyle='dashed',zorder=-1)
+            plt.text(1.0,0.15,'R = {}'.format(str(round(total_cor,3))), transform=ax.transAxes, fontsize=15)
+            plt.text(1.0,0.10,'P = {}'.format(str(pvalue)), transform=ax.transAxes, fontsize=15)
+            plt.text(1.0,0.05,'RMSE = {}'.format(str(round(rmse,3))), transform=ax.transAxes, fontsize=15)
+            
+            plt.xlabel(self.xlabel,fontsize=self.label_size)
+            plt.ylabel(self.ylabel,fontsize=self.label_size)
+            plt.xticks(fontsize=self.tick_size)
+            plt.yticks(fontsize=self.tick_size)
+            plt.gca().spines['right'].set_visible(False)
+            plt.gca().spines['top'].set_visible(False)
+            plt.gca().yaxis.set_ticks_position('left')
+            plt.gca().xaxis.set_ticks_position('bottom')
+            ax.set_axisbelow(True)
+            ax.grid(color="#ababab",linewidth=0.5)
+            plt.legend(shadow=True,bbox_to_anchor=(1.0, 1), loc='upper left')
+            #plt.title(title,fontsize=self.label_size)
+            plt.show()
 
         return total_cor
     

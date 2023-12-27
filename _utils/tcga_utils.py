@@ -34,7 +34,7 @@ class TCGA_Analysis():
 
     def preprocessing(self,hard_threshold=-1,lower_days=0,upper_days=3650):
         # sample name norm
-        id2sample = pd.read_pickle('/workspace/github/GLDADec/evaluation/data/caseid2sample_dic.pkl')
+        id2sample = pd.read_pickle('/workspace/github/GLDADec/data/TCGA/caseid2sample_dic.pkl')
         self.clinical.index = [id2sample.get(t) for t in self.clinical['case_id'].tolist()] # rename index
 
         exp_samples = self.exp.columns.tolist()
