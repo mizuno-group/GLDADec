@@ -1,17 +1,12 @@
-# GLDADec
-Guided LDA Deconvolution
+## Data
 
-## Authors
-- [Iori Azuma](https://github.com/groovy-phazuma)  
-    - main contributor  
-- [Tadahaya Mizuno](https://github.com/tadahayamiz)  
-    - correspondence  
+### Bulk gene expression data & FACS true values
+- GSE65133 (human blood)
+- GSE107572 (human blood)
+- GSE60424 (human blood)
+- GSE237801 (mosue liver)
+- GSE239996 (rat liver)
 
-## Note
-This repository is under construction and will be officially released by [Mizuno group](https://github.com/mizuno-group).  
+Note: Due to memory problems, some files are not registered in this repository. Please contact us if necessary.
 
-## Contact
-If you have any questions or comments, please feel free to create an issue on github here, or email us:  
-- phazuma19980625[at]gmail.com  
-- tadahaya[at]gmail.com  
-- tadahaya[at]mol.f.u-tokyo.ac.jp  
+### Marker genes information
