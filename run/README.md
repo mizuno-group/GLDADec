@@ -1,17 +1,25 @@
-# GLDADec
-Guided LDA Deconvolution
+## Running
 
-## Authors
-- [Iori Azuma](https://github.com/groovy-phazuma)  
-    - main contributor  
-- [Tadahaya Mizuno](https://github.com/tadahayamiz)  
-    - correspondence  
+`pipeline.py` integrates several classes described below. You can perform the following tasks by manipulating this file.
 
-## Note
-This repository is under construction and will be officially released by [Mizuno group](https://github.com/mizuno-group).  
+1. Input expression data, sample selection, and preprocessing.
+2. Selection of genes with high variability for analysis.
+3. Input marker genes to be used as prior information.
+4. Condition setting for deconvolution.
+5. Performing GLDADec.
+6. Evaluate by comparing the estimated value with the true value measured by flow cytometry.
 
-## Contact
-If you have any questions or comments, please feel free to create an issue on github here, or email us:  
-- phazuma19980625[at]gmail.com  
-- tadahaya[at]gmail.com  
-- tadahaya[at]mol.f.u-tokyo.ac.jp  
+***
+#### Components of `pipeline.py`
+- `dev0_preprocessing.py`: Data preprocessing class.
+
+- `dev1_set_data.py`: Loading and setting data class.
+    1. Input raw gene expression data.
+    2. Set marker genes information.
+    3. Refine marker genes according to the target data.
+    4. Final processing of expression data.
+    5. Preparation of prior information for topic guiding.
+       
+- `dev2_deconvolution.py`: Deconvolution core class
+
+- `dev3_evaluation.py`: Performance evaluation class.
