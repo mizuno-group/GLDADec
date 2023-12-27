@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).parent.parent
 import sys
 sys.path.append(str(BASE_DIR))
 
-from _utils import processing
+from _utils import gldadec_processing
 
 class SetData():
     def __init__(self,verbose=True):
@@ -35,6 +35,7 @@ class SetData():
         self.marker_dic = None
         self.final_int = None
         self.input_mat = None
+        self.__processing = gldadec_processing
     
     def set_expression(self,df):
         """
@@ -192,7 +193,7 @@ class SetData():
 
         # prior information normalization
         if prior_norm:
-            linear_norm = processing.freq_norm(target_df,self.marker_final_dic)
+            linear_norm = self.__processing.freq_norm(target_df,self.marker_final_dic)
             linear_norm = linear_norm.loc[sorted(linear_norm.index.tolist())]
             final_df = linear_norm/norm_scale
         else:
