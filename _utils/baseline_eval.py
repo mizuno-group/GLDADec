@@ -12,6 +12,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.collections import EllipseCollection
 
+from sklearn.preprocessing import MinMaxScaler
+
 # %%
 def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_performance_summary/GSE65133',
                   methods = ['Proposed','FARDEEP','EPIC','CIBERSORT','DCQ','NNLS','RLR','ElasticNet'],
@@ -35,7 +37,7 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
         for cell in cells:
             cell_res = res.get(cell)
             cor_list.append(cell_res[0][1])
-            rmse_list.append(cell_res[2][1])
+            rmse_list.append(1/cell_res[2][1])
         cor_data.append(cor_list)
         rmse_data.append(rmse_list)
 
@@ -66,12 +68,22 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
     plt.show()
 
     # display heatmap
-    fig,ax = plt.subplots(dpi=300)
-    cor_df = pd.DataFrame(data)
-    sns.heatmap(cor_df,annot=True,linewidths=0.5,cmap='cividis',fmt='.2f')
-    plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
-    plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
-    plt.show()
+    if res_type == 'cor':
+        fig,ax = plt.subplots(dpi=300)
+        data_df = pd.DataFrame(data)
+        sns.heatmap(data_df,annot=True,linewidths=0.5,cmap='cividis',fmt='.2f')
+        plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
+        plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
+        plt.show()
+    else:
+        fig,ax = plt.subplots(dpi=300)
+        data_df = pd.DataFrame(data)
+        sns.heatmap(data_df,annot=True,linewidths=0.5,cmap='Reds',fmt='.2f')
+        plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
+        plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
+        plt.show()
+
+    return data_df
 
 
 # %%

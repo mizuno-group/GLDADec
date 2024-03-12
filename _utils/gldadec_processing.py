@@ -35,39 +35,6 @@ def annotation(df,ref_df, places:list=[0, 1]):
     df_conv = df_conv.groupby("symbol").median() # take median value for duplication rows
     return df_conv
 
-def annotation_legacy(df,ref_df):
-    """
-    annotate row IDs to gene names
-
-    Parameters
-    ----------
-    df : a dataframe to be analyzed
-    ref_df : two rows of dataframe. e.g. ["Gene stable ID","MGI symbol"]
-
-    """
-    ref_col = ref_df.columns.tolist()
-    print("reference information :",ref_col)
-    ids = ref_df[ref_col[0]].tolist()
-    symbols = ref_df[ref_col[1]].tolist()
-    
-    total_id = [x.split(".")[0] for x in df.index.tolist()] # ENSMUSG00000000049.12 --> ENSMUSG00000000049
-    total_res = [None]*len(df)
-    
-    id_set = set(ids)
-    for i in tqdm(range(len(total_id))):
-        if total_id[i] in id_set:
-            j = ids.index(total_id[i])
-            total_res[i] = symbols[j]
-        else:
-            pass
-    
-    total_df = copy.deepcopy(df)
-    total_df["symbol"] = total_res # add new col
-    drop_df = total_df.dropna() # remove rows which has no annotation
-    group_df = drop_df.groupby("symbol").median() # take median value for duplication rows
-    
-    return group_df
-
 def array_imputer(df,threshold=0.9,strategy="median",trim=1.0,batch=False,lst_batch=[], trim_red=True):
     """
     imputing nan and trim the values less than 1
