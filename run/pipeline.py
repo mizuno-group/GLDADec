@@ -139,7 +139,7 @@ class Pipeline():
             raise ValueError('!! set other method !!')
         logger.info('method: {}, outlier:{}, n_top: {}'.format(method,outlier,topn))
     
-    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer'],add_dic=None):
+    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer'],add_gene_list=[],add_dic=None):
         if add_dic is None:
             marker_dic = self.marker_dic
         else:
@@ -158,7 +158,8 @@ class Pipeline():
         # gene definition
         marker_genes = list(itertools.chain.from_iterable(list(self.target_dic.values()))) # marker genes
         common_marker = sorted(list(set(marker_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
-        target_genes = sorted(list(set(common_marker) | set(self.high_genes))) # 500 + 189
+        target_genes = sorted(list(set(common_marker) | set(self.high_genes))) # + high CV genes
+        target_genes = sorted(list(set(target_genes) | set(add_gene_list)))# + manually added genes
 
         self.added_df = self.target_df.loc[target_genes]
 
