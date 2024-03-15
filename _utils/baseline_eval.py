@@ -41,11 +41,32 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
         cor_data.append(cor_list)
         rmse_data.append(rmse_list)
 
-    # plot bar
-    if res_type == 'cor':
-        data = cor_data
-    else:
-        data = rmse_data
+    # Bar plots
+    plot_bars(cor_data,cells,methods,tmp_ylabel='Pearson Correlation')
+    plot_bars(rmse_data,cells,methods,tmp_ylabel=r'$RMSE^{-1}$')
+
+    # Correlation heatmap
+    cor_df = pd.DataFrame(cor_data)
+    fig,ax = plt.subplots(dpi=300)
+    sns.heatmap(cor_df,annot=True,linewidths=0.5,cmap='cividis',fmt='.2f')
+    plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
+    plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
+    plt.show()
+
+    # RMSE heatmap
+    rmse_df = pd.DataFrame(rmse_data)
+    fig,ax = plt.subplots(dpi=300)
+    maxv = rmse_df.max().max()
+    fxn = lambda x : x/maxv
+    mm_data = rmse_df.applymap(fxn)
+
+    sns.heatmap(mm_data,vmax=1,vmin=0,annot=True,linewidths=0.5,cmap='Reds',fmt='.2f')
+    plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
+    plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
+    plt.show()
+
+
+def plot_bars(data,cells,methods,tmp_ylabel):
     hatch_list = ['/', '|', '-', '+', 'x', 'o', 'O', '.', '*']
     fig,ax = plt.subplots(figsize=(15,8),dpi=300)
     x = [k*len(data) for k in range(len(cells))]
@@ -53,12 +74,10 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
         v = data[i]
         x2 = [t+i*0.8 for t in x]
         plt.bar(x2,v,label=methods[i],width=0.7,hatch=hatch_list[i]*2)
-        #plt.bar(x2,v,label=methods[i],width=0.7)
     plt.xticks([t+2.4 for t in x],cells,fontsize=18,rotation=90)
     plt.yticks(fontsize=18)
-    plt.ylabel('Correlation',fontsize=18)
+    plt.ylabel(tmp_ylabel,fontsize=18)
     plt.legend(loc='upper center',shadow=True,fontsize=13,bbox_to_anchor=(0.5,1.1),ncol=len(methods))
-    #plt.legend(loc='best',fontsize=13,shadow=True)
     plt.gca().spines['right'].set_visible(False)
     plt.gca().spines['top'].set_visible(False)
     plt.gca().yaxis.set_ticks_position('left')
@@ -66,24 +85,6 @@ def heatmap_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perfo
     ax.set_axisbelow(True)
     ax.grid(color="#ababab",linewidth=1.0, axis='y')
     plt.show()
-
-    # display heatmap
-    if res_type == 'cor':
-        fig,ax = plt.subplots(dpi=300)
-        data_df = pd.DataFrame(data)
-        sns.heatmap(data_df,annot=True,linewidths=0.5,cmap='cividis',fmt='.2f')
-        plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
-        plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
-        plt.show()
-    else:
-        fig,ax = plt.subplots(dpi=300)
-        data_df = pd.DataFrame(data)
-        sns.heatmap(data_df,annot=True,linewidths=0.5,cmap='Reds',fmt='.2f')
-        plt.xticks([i+0.5 for i in range(len(cells))],cells,rotation=90)
-        plt.yticks([i+0.5 for i in range(len(methods))],methods,rotation=0)
-        plt.show()
-
-    return data_df
 
 
 # %%
@@ -108,9 +109,15 @@ def cor_rmse_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perf
             rmse_list.append(cell_res[2][1])
         cor_data.append(cor_list)
         rmse_data.append(rmse_list)
+    
+    # scaling
+    data_df = pd.DataFrame(rmse_data)
+    maxv = data_df.max().max()
+    fxn = lambda x : x/maxv
+    mm_data = data_df.applymap(fxn)
 
     M = np.array(cor_data)
-    M2 = np.array(rmse_data)
+    M2 = np.array(mm_data)
     fig, ax = plt.subplots(1, 1, subplot_kw={'aspect':'equal'}, dpi=300)
     ax.set_xlim(-0.5, M.shape[1] - 0.5)
     ax.set_ylim(-0.5, M.shape[0] - 0.5)
@@ -124,7 +131,7 @@ def cor_rmse_eval(baseline_dir = '/workspace/github/GLDADec/baselines_eval/_perf
                             transOffset=ax.transData, array=M2.ravel())
     ax.add_collection(ec)
     cb = fig.colorbar(ec)
-    cb.set_label('RMSE')
+    cb.set_label(r'$Scaled RMSE^{-1}$')
     ax.margins(0.1)
     ax.set_xticks(np.arange(M.shape[1]))
     ax.set_xticklabels(cells, rotation=90)

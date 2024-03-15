@@ -93,9 +93,10 @@ class GLDADeconvMS():
 
     """
 
-    def __init__(self, n_topics, n_iter=2000, alpha=0.01, eta=0.01, random_state=123, refresh=10, verbose=True):
+    def __init__(self, n_topics, n_iter=2000, burnin=300, alpha=0.01, eta=0.01, random_state=123, refresh=10, verbose=True):
         self.n_topics = n_topics
         self.n_iter = n_iter
+        self.burnin = burnin
         self.alpha = alpha
         self.eta = eta
         # if random_state is None, check_random_state(None) does nothing
@@ -206,7 +207,7 @@ class GLDADeconvMS():
                 
         ll = self.loglikelihood()
         #logger.info("<{}> log likelihood: {:.0f}".format(self.n_iter, ll))
-        # note: numpy /= is integer division
+
         self.components_ = (self.nzw_ + self.eta).astype(float)
         self.components_ /= np.sum(self.components_, axis=1)[:, np.newaxis]
         self.topic_word_ = self.components_
@@ -241,12 +242,10 @@ class GLDADeconvMS():
         D, W = X.shape
         N = int(X.sum())
         n_topics = self.n_topics
-        n_iter = self.n_iter
         #logger.info("n_documents: {}".format(D))
         #logger.info("vocab_size: {}".format(W))
         #logger.info("n_words: {}".format(N))
         #logger.info("n_topics: {}".format(n_topics))
-        #logger.info("n_iter: {}".format(n_iter))
 
         self.beta = 0.1
         self.nzw_ = nzw_ = np.zeros((n_topics, W), dtype=np.intc) # + self.beta
@@ -265,8 +264,7 @@ class GLDADeconvMS():
             # check if seeded initialization
             if w in seed_topics and random.random() < initial_confidence: # 0 <= random.random() < 1
                 topic_candi = seed_topics[w]
-                # FIXME: do not fix random state --> bias
-                #random.seed(self.random_state)
+                #random.seed(self.random_state) # NOTE: do not fix random state
                 z_new = random.sample(topic_candi,1)[0]
             else:
                 z_new = i % n_topics
@@ -293,9 +291,9 @@ class GLDADeconvMS():
         
         self.initial_freq = nzw_.astype(np.intc)
         
-
     def purge_extra_matrices(self):
-        """Clears out word topic. document topic. and internal matrix.
+        """
+        Clears out word topic. document topic. and internal matrix.
         Once this method is used. don't call fit_transform again.
         Just use the model for predictions.
         """
@@ -317,11 +315,10 @@ class GLDADeconvMS():
         eta = self.eta
         nd = np.sum(ndz, axis=1).astype(np.intc)
         return _lda_basic._loglikelihood(nzw, ndz, nz, nd, alpha, eta)
-    
 
     def _sample_topics(self, rands, seed_keys, seed_conf, other_conf):
-        """ Samples all topic assignments. Called once per iteration.
-        
+        """
+        Samples all topic assignments. Called once per iteration.
         seed_key : [194 117 147  35  58 172 118]
         
         """
