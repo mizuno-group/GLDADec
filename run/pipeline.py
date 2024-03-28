@@ -157,9 +157,9 @@ class Pipeline():
 
         # gene definition
         marker_genes = list(itertools.chain.from_iterable(list(self.target_dic.values()))) # marker genes
-        common_marker = sorted(list(set(marker_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
-        target_genes = sorted(list(set(common_marker) | set(self.high_genes))) # + high CV genes
-        target_genes = sorted(list(set(target_genes) | set(add_gene_list)))# + manually added genes
+        target_genes = sorted(list(set(marker_genes) | set(self.high_genes))) 
+        target_genes = sorted(list(set(target_genes) | set(add_gene_list)))
+        target_genes = sorted(list(set(target_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
 
         self.added_df = self.target_df.loc[target_genes]
 
