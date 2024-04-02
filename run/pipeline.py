@@ -139,7 +139,7 @@ class Pipeline():
             raise ValueError('!! set other method !!')
         logger.info('method: {}, outlier:{}, n_top: {}'.format(method,outlier,topn))
     
-    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer'],add_dic=None):
+    def add_marker_genes(self,target_cells=['B', 'NK', 'Neutrophil', 'Monocyte', 'Eosinophil', 'Basophil', 'Kupffer'],add_gene_list=[],add_dic=None):
         if add_dic is None:
             marker_dic = self.marker_dic
         else:
@@ -157,8 +157,9 @@ class Pipeline():
 
         # gene definition
         marker_genes = list(itertools.chain.from_iterable(list(self.target_dic.values()))) # marker genes
-        common_marker = sorted(list(set(marker_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
-        target_genes = sorted(list(set(common_marker) | set(self.high_genes))) # 500 + 189
+        target_genes = sorted(list(set(marker_genes) | set(self.high_genes))) 
+        target_genes = sorted(list(set(target_genes) | set(add_gene_list)))
+        target_genes = sorted(list(set(target_genes) & set(self.target_df.index.tolist()))) # marker genes that are registered
 
         self.added_df = self.target_df.loc[target_genes]
 
@@ -178,6 +179,7 @@ class Pipeline():
 
         # Collect data to be used in later analyses
         self.input_mat = SD.input_mat
+        self.final_linear = SD.final_linear
         self.final_int = SD.final_int
         self.seed_topics = SD.seed_topics
         self.marker_final_dic = SD.marker_final_dic
@@ -276,11 +278,11 @@ class Pipeline():
         logger.info('n_ensemble: {}, n_add_topics: {}, n_iter: {}'.format(n,add_topic,n_iter))
         gc.collect()
             
-    def evaluate(self,facs_df=None,deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
+    def evaluate(self,facs_df=None,deconv_res:list=[],deconv_norm_range=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],facs_norm_range=['NK','Monocyte','Neutrophil','Kupffer','Eosinophil'],
     res_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
     ref_names=[['Neutrophil'],['Monocyte'],['NK'],['Eosinophil'],['Kupffer']],
     title_list=['NK','Neutrophil','Monocyte','Eosinophil','Kupffer'],
-    target_samples = None,
+    target_samples = None,z_norm=False,
     figsize=(6,6),dpi=50,plot_size=100,multi=True,overlap=False):
         """
         ----------
@@ -297,6 +299,8 @@ class Pipeline():
 
         """
         Eval = dev3_evaluation.Evaluation()
+        if len(deconv_res) > 0:
+            self.merge_total_res = deconv_res
         # normalize
         if len(deconv_norm_range)==0:
             self.norm_res = self.merge_total_res
@@ -309,8 +313,8 @@ class Pipeline():
             norm_facs = self.__processing.norm_val(val_df=facs_df,base_names=facs_norm_range)
         
         # evaluation
-        Eval.set_res(total_res=self.norm_res,z_norm=False)
-        Eval.set_ref(ref_df=norm_facs,z_norm=False)
+        Eval.set_res(total_res=self.norm_res,z_norm=z_norm)
+        Eval.set_ref(ref_df=norm_facs,z_norm=z_norm)
         self.ensemble_res = Eval.ensemble_res
         if multi:
             Eval.multi_eval_multi_group(res_names=res_names,ref_names=ref_names,title_list=title_list,figsize=figsize,dpi=dpi,plot_size=plot_size) # visualization

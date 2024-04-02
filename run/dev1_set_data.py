@@ -198,6 +198,7 @@ class SetData():
             final_df = linear_norm/norm_scale
         else:
             final_df = target_df/norm_scale
+        self.final_linear = final_df
         self.final_int = final_df.astype(int)
         self.input_mat = np.array(self.final_int.T,dtype='int64')
 

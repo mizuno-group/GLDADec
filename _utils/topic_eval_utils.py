@@ -93,7 +93,6 @@ class AddTopicEval():
         self.cluster_df = cluster_df
 
     def conduct_fet(self,ref_dic:dict,threshold=None,cluster=True):
-        # pd.read_pickle('/workspace/github/enan/enan/enrichr/KEGG_2019_Mouse_ref_dic.pkl')
         if cluster:
             if self.cluster_df is None:
                 raise ValueError("!! conduct topic_clustering or change to cluster=False !!")
@@ -106,6 +105,8 @@ class AddTopicEval():
 
         if threshold is None:
             threshold = 1/self.n_clusters
+            if threshold > 0.5:
+                print('The threshold is may be high.')
         res_summary = []
         for i in range(num):
             try:
@@ -113,6 +114,7 @@ class AddTopicEval():
             except:
                 contr_df = pd.DataFrame(self.cluster_df[i])
                 contr_df.columns = [0]
+            self.contr_df = contr_df
             
             high_gene = set(contr_df[contr_df[0]>threshold].index.tolist())
             dat = FET() # generate an instance
