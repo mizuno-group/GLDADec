@@ -167,6 +167,14 @@ class Pipeline():
         self.other_genes = sorted(list(set(self.added_df.index) - set(itertools.chain.from_iterable(self.target_dic.values()))))
         logger.info('target_cells: {}, n_genes: {}'.format(target_cells,len(target_genes)))
     
+    def add_info(self,added_df=None,target_dic:dict=None,other_genes:list=None):
+        if added_df is not None:
+            self.added_df = added_df
+        if target_dic is not None:
+            self.target_dic = target_dic
+        if other_genes is not None:
+            self.other_genes = other_genes
+    
     def deocnv_prep(self,random_sets:list,do_plot=True,specific=True,prior_norm=True,norm_scale=1000,minmax=True,mm_scale=10):
         # dev1
         SD = dev1_set_data.SetData(verbose=self.verbose)
