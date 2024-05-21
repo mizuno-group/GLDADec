@@ -337,17 +337,20 @@ class Pipeline():
         logger.info('res_names: {}'.format(res_names))
         logger.info('facs_names: {}'.format(ref_names))
     
-    def add_profile_eval(self,add_topic=10,topn=None,alternative='less',do_plot=True):
-        """_summary_
+    def add_profile_eval(self,add_topic=10,topn=None,alternative='greater',do_plot=True):
+        """ Evaluate the added topic redundancy of the added topics and determine the optimal number of topics.
 
-        Args:
-            add_topic (int, optional): _description_. Defaults to 10.
-            topn (_type_, optional): _description_. Defaults to None.
-            alternative (str, optional): _description_. Defaults to 'less'.
-            do_plot (bool, optional): _description_. Defaults to True.
+        Parameters
+        ----------
+        add_topic : int, optional
+            Number of additional topics, by default 10
+        topn : _type_, optional
+            Number of genes used as features for redundancy assessment, by default None
+        alternative : str, optional
+            Defines the alternative hypothesis, by default 'greater'
+        do_plot : bool, optional
+            Whether to visualize the results as heatmap, by default True
 
-        Returns:
-            _type_: _description_
         """
         if alternative not in ['less','greater']:
             raise ValueError('!! Inappropriate alternative setting !!')
@@ -370,41 +373,51 @@ class Pipeline():
             SLCO1A4	0.000125	0.000125	    0.000125	... 0.000125	0.000125
             AFM	    0.000080	0.191620	    0.000080	... 0.000080	0.000080
             """
-            add_gc = gc_df[[i+1 for i in range(add_topic)]] # added topics
-            other_genes = self.other_genes
-            add_gc_other = add_gc.loc[other_genes] # added gene contribution to added topics
+
+            gc_other = gc_df.loc[self.other_genes]
             if topn is None:
-                topn = int(len(add_gc_other)/add_topic) # soft threshold
+                topn = int(len(gc_other)/gc_df.shape[1])  # gc_df.shape[1] --> Kg+Ku
 
             target_genes = []
-            for t in add_gc_other.columns.tolist():
-                tmp_df = add_gc_other[[t]].sort_values(t,ascending=False)
-                top_genes = tmp_df.index.tolist()[0:topn] # high contribution to the topic
-                target_genes.extend(top_genes)
-            target_gc_other = add_gc_other.loc[sorted(list(set(target_genes)))]
+            for at in gc_other.columns.tolist():
+                tmp_df = gc_other[[at]].sort_values(at,ascending=False)
+                top_genes = tmp_df.index.tolist()[0:topn]  # high contribution to the topic
+                target_genes.extend(top_genes)  # pool
+            target_gc_other = gc_other.loc[sorted(list(set(target_genes)))]
 
-            # overlap eval
-            if len(target_gc_other) != len(target_genes):
-                overlap = True
-            # metric
             cor = target_gc_other.corr()
-            cor_list.append(cor)
             pval = target_gc_other.corr(method=lambda x, y: pearsonr(x, y,alternative=alternative)[1])
+
+            # added topic profiles
+            added_col = [i+1 for i in range(add_topic)]
+            cor = cor[added_col]  # (Kg+Ku, Ku)
+            pval = pval[added_col]  # (Kg+Ku, Ku)
+            cor_list.append(cor)
             pvalue_list.append(pval)
+
             max_pval = np.triu(np.array(pval),k=1).max()
-            tmp =  np.triu(np.array(pval),k=1)
-            min_pval =np.where(tmp==0,1,tmp).min() # no considerations other than the upper triangle
+            min_pval =np.where(np.array(pval)==0,1,np.array(pval)).min() 
+
             max_p_list.append(max_pval)
             min_p_list.append(min_pval)
+
 
         # select
         if alternative == 'less':
             #target_p = max(max_p_list) # max(max_p_list) is the most strict condition
             target_p = min(max_p_list) # min(max_p_list) is mild condition
             target_index = max_p_list.index(target_p)
+            if target_p < 0.05:
+                pval_flag = "Continue"
+            else:
+                pval_flag = "Stop"
         else:
             target_p = min(min_p_list)
             target_index = min_p_list.index(target_p)
+            if target_p < 0.05:
+                pval_flag = "Stop"
+            else:
+                pval_flag = "Continue"
 
         p_res = pvalue_list[target_index]
         cor_res = cor_list[target_index]
@@ -417,14 +430,10 @@ class Pipeline():
             # pvalue eval
             sns.heatmap(p_res,ax=axes[1],annot=True,fmt="1.1e",cmap='cividis',annot_kws={"fontsize":6})
             plt.show()
-        if target_p < 0.05:
-            pval_flag = False
-        else:
-            pval_flag = True
 
         logger.info('overlap: {}, pvalue: {}'.format(overlap,pval_flag))
         return overlap, pval_flag, min_p_list, max_p_list
-
+    
 def main():
     logging.basicConfig(level=logging.INFO,format="%(asctime)s %(name)s %(levelname)7s %(message)s",filename='/path/to/log.txt', filemode='w')
 

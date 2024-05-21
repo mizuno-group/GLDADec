@@ -3,7 +3,7 @@
 """
 Created on Sun Dec 25 16:16:03 2022
 
-Deconvolution core class.
+Core class of GLDADec.
 
 @author: docker
 """
@@ -372,7 +372,6 @@ def main():
         Dec.expression_processing(random_n=0)
     
     Dec.seed_processing()
-    #Dec.conduct_deconv(add_topic=0,n_iter=200,alpha=0.01,eta=0.01,random_state=123,refresh=10)
     Dec.ensemble_deconv(add_topic=0,n_iter=200,alpha=0.01,eta=0.01,refresh=10)
     
     marker_dec_dic = Dec.marker_dec_dic
