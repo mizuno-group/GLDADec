@@ -61,7 +61,7 @@ class Evaluation():
             self.ref_df = ref_df
         print('cells in ref :',self.ref_df.columns.tolist())
     
-    #%% main
+    # %% main
     def multi_eval(self,
                    res_names=[['B cells naive'],['T cells CD4 naive'],['T cells CD8'],['NK cells'],['Monocytes']],
                    ref_names=[['Naive B'],['Naive CD4 T'],['CD8 T'],['NK'],['Monocytes']],
