@@ -63,9 +63,6 @@ class AddTopicEval():
         mm_scaler = MinMaxScaler()
         mm_df = (pd.DataFrame(mm_scaler.fit_transform(additional_summary),index=additional_summary.index, columns=additional_summary.columns))
 
-        #sns.clustermap(mm_df,z_score=1)
-        #plt.show()
-
         self.additional_summary = mm_df
     
     def topic_clustering(self,method='kmeans',do_plot=True,n_clusters=None):
