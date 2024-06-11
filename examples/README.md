@@ -15,5 +15,10 @@
     
 ### 4. Application to tumor samples (Fig. 6)
 - `*_TCGA_BRCA.ipynb`
-    - BRCA subtype classification
-    - Survival analysis
+    - BRCA subtype classification.
+    - Survival analysis.
+
+### 5. Application to lung pseudo dataset (Fig. S18)
+- `*_pseudo_bulk.ipynb`
+    - 100 samples consisting of five types of immune cells and four types of background cells were generated.
+    - Estimating their constituent cell proportions.
