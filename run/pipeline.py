@@ -29,10 +29,10 @@ from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
 from pathlib import Path
-BASE_DIR = Path(__file__).parent.parent
+BASE_DIR = str(Path(__file__).parent.parent)
 
 import sys
-sys.path.append(str(BASE_DIR))
+sys.path.append(BASE_DIR)
 
 from run import dev0_preprocessing
 from run import dev1_set_data
@@ -175,7 +175,7 @@ class Pipeline():
         if other_genes is not None:
             self.other_genes = other_genes
     
-    def deocnv_prep(self,random_sets:list,do_plot=True,specific=True,prior_norm=True,norm_scale=1000,minmax=True,mm_scale=10):
+    def deconv_prep(self,random_sets:list,do_plot=True,specific=True,prior_norm=True,norm_scale=1000,minmax=True,mm_scale=10):
         # dev1
         SD = dev1_set_data.SetData(verbose=self.verbose)
         SD.set_expression(df=self.added_df) 
@@ -435,9 +435,8 @@ class Pipeline():
         return overlap, pval_flag, min_p_list, max_p_list
     
 def main():
-    logging.basicConfig(level=logging.INFO,format="%(asctime)s %(name)s %(levelname)7s %(message)s",filename='/path/to/log.txt', filemode='w')
+    logging.basicConfig(level=logging.INFO,format="%(asctime)s %(name)s %(levelname)7s %(message)s",filename=BASE_DIR+'/run/log_files/pipeline_log.txt', filemode='w')
 
-    BASE_DIR = '/workspace/github/GLDADec'
     raw_df = pd.read_csv(BASE_DIR+'/data/GSE237801/mouse_dili_expression.csv',index_col=0)
     marker_dic = pd.read_pickle(BASE_DIR+'/data/marker/mouse_liver_CellMarker.pkl')
     random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/100_random_sets.pkl')
@@ -448,8 +447,8 @@ def main():
                         do_ann=False,linear2log=False,log2linear=False,do_drop=True,do_batch_norm=False,do_quantile=False)
     pp.gene_selection(method='CV',outlier=True,topn=1000)
     pp.add_marker_genes(target_cells=[],add_dic=marker_dic)
-    pp.deocnv_prep(random_sets=random_sets,do_plot=False,specific=True,prior_norm=True,norm_scale=1,minmax=True,mm_scale=10)
-    pp.deconv(n=10,add_topic=3,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=False)
+    pp.deconv_prep(random_sets=random_sets,do_plot=False,specific=True,prior_norm=True,norm_scale=1,minmax=True,mm_scale=10)
+    pp.deconv(n=10,add_topic=10,n_iter=100,alpha=0.01,eta=0.01,refresh=10,initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=False)
 
     # evaluation
     res = pp.merge_total_res
