@@ -22,11 +22,16 @@ python setup.py build_ext --inplace
 GLDADec mainly inputs the bulk gene expression profiles to be analyzed and the marker gene names for each cell type. The processed data and the code for processing are in the ```./data/``` folder.
 
 ``` Python
-BASE_DIR = '/workspace/github/GLDADec' # path to the cloned repository
+BASE_DIR = '/workspace/github/GLDADec'  # path to the cloned repository
 
-raw_df = pd.read_csv(BASE_DIR+'/data/GSE65133/GSE65133_expression.csv',index_col=0) # bulk gene expression
-domain_dic = pd.read_pickle(BASE_DIR+'/data/marker/human_blood_domain.pkl') # marker gene names for each cell type
-target_facs = pd.read_csv(BASE_DIR+'/data/GSE65133/facs.csv',index_col=0)/100 # true values measured by FACS
+import pandas as pd
+import sys
+sys.path.append(BASE_DIR)
+from run import pipeline
+
+raw_df = pd.read_csv(BASE_DIR+'/data/GSE65133/GSE65133_expression.csv',index_col=0)  # bulk gene expression
+domain_dic = pd.read_pickle(BASE_DIR+'/data/marker/human_blood_domain.pkl')  # marker gene names for each cell type
+target_facs = pd.read_csv(BASE_DIR+'/data/GSE65133/facs.csv',index_col=0)/100  # true values measured by FACS
 random_sets = pd.read_pickle(BASE_DIR+'/data/random_info/100_random_sets.pkl')
 
 # single run and eval
@@ -38,14 +43,14 @@ pp.gene_selection(method='CV',outlier=True,topn=100)
 pp.add_marker_genes(target_cells=['Monocytes','NK cells','B cells naive','B cells memory',
                                   'T cells CD4 naive','T cells CD4 memory','T cells CD8','T cells gamma delta'],
                     add_dic=domain_dic)
-pp.deocnv_prep(random_sets=random_sets,do_plot=False,specific=True,prior_norm=True,norm_scale=10,minmax=False,mm_scale=10)
+pp.deconv_prep(random_sets=random_sets,do_plot=False,specific=True,prior_norm=True,norm_scale=10,minmax=False,mm_scale=10)
 pp.deconv(n=10,add_topic=0,n_iter=100,alpha=0.01,eta=0.01,refresh=10,
           initial_conf=1.0,seed_conf=1.0,other_conf=0.0,ll_plot=True,var_plot=False)
 
 # evaluate
 pp.evaluate(facs_df=target_facs,
     deconv_norm_range=['Monocytes', 'NK cells', 'B cells naive', 'B cells memory',
-         'T cells CD4 naive', 'T cells CD4 memory', 'T cells CD8', 'T cells gamma delta'],
+                       'T cells CD4 naive', 'T cells CD4 memory', 'T cells CD8', 'T cells gamma delta'],
     facs_norm_range=[],
     res_names=[['B cells naive'],['B cells memory'],['T cells CD4 naive'],['T cells CD4 memory'],
                ['T cells CD8'],['NK cells'],['Monocytes'],['T cells gamma delta']],
@@ -56,7 +61,7 @@ pp.evaluate(facs_df=target_facs,
 
 # output
 merge_res = pp.merge_total_res
-deconv_res = sum(merge_res) / len(merge_res) # ensemble
+deconv_res = sum(merge_res) / len(merge_res)  # ensemble
 ```
 By referring to the sample codes in  ```./example/``` folder, you can perform a more detailed analysis or reproduce a paper using GLDADec.
 
