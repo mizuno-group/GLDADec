@@ -4,6 +4,10 @@ Here, we proposed a Guided LDA Deconvolution method, called GLDADec, to estimate
 
 <img src="https://github.com/mizuno-group/LiverDeconv/assets/92911852/93c7c6dc-ec6d-4471-824d-23efecd38e75" width=800>
 
+## Publication
+- [peer-reviewed publication](https://academic.oup.com/bib/article/25/4/bbae315/7709575)  
+- [preprint](https://www.biorxiv.org/content/10.1101/2024.01.08.574749v2)  
+
 ## Getting Started
 #### Step 1. Clone this repository
 ```
@@ -70,9 +74,6 @@ By referring to the sample codes in  ```./example/``` folder, you can perform a 
     - main contributor  
 - [Tadahaya Mizuno](https://github.com/tadahayamiz)  
     - correspondence  
-
-## Note
-This repository is under construction and will be officially released by [Mizuno group](https://github.com/mizuno-group).  
 
 ## Contact
 If you have any questions or comments, please feel free to create an issue on github here, or email us:  
