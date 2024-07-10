@@ -16,13 +16,16 @@ class TCGA_Analysis():
         self.deconv_res = None
     
     def set_data(self,exp,deconv_res,clinical):
-        """
-                    sample_1    sample_2    sample_3 
-        TSPAN6	    36.7106	    23.4776	    90.4249	 
-        TNMD	    14.2019	    1.1934	    0.0000	 
-        DPM1	    64.9972	    82.4721	    110.8229	
-        SCYL3	    5.6286	    12.3943	    31.8373	 
-        C1orf112	2.5030	    10.7891	    15.4869	  
+        """_summary_
+
+        Parameters
+        ----------
+        exp : DataFrame
+            Gene expression profile (Genes x Samples).
+        deconv_res : DataFrame
+            Deconvolution output (Samples x Cells)
+        clinical : DataFrame
+            Patients information (Samples x Items)
         """
         self.exp = exp
         self.deconv_res = deconv_res
@@ -32,9 +35,10 @@ class TCGA_Analysis():
         logger.info('raw immune: {}'.format(self.deconv_res.shape))
         logger.info('raw clinical: {}'.format(self.clinical.shape))
 
-    def preprocessing(self,hard_threshold=-1,lower_days=0,upper_days=3650):
+    def preprocessing(self,hard_threshold=-1,lower_days=0,upper_days=3650,
+                      id2sample_path='/workspace/github/GLDADec/data/TCGA/caseid2sample_dic.pkl'):
         # sample name norm
-        id2sample = pd.read_pickle('/workspace/github/GLDADec/data/TCGA/caseid2sample_dic.pkl')
+        id2sample = pd.read_pickle(id2sample_path)
         self.clinical.index = [id2sample.get(t) for t in self.clinical['case_id'].tolist()] # rename index
 
         exp_samples = self.exp.columns.tolist()
@@ -51,6 +55,7 @@ class TCGA_Analysis():
         fxn = lambda x : convert(x)
         prognosis["OS_Time"] = prognosis["OS_Time"].apply(fxn)
 
+        # label definition
         prog_status = []
         status = prognosis["OS_Status"].tolist()
         for i in range(len(prognosis)):
@@ -86,6 +91,16 @@ class TCGA_Analysis():
         self.concat_df = concat_df[(0<concat_df['OS_Time']) & (concat_df['OS_Time']<upper_days)]
     
     def calc(self,cell='Macrophage',do_plot=True):
+        """ Conduct survival time analysis.
+
+        Parameters
+        ----------
+        cell : str, optional
+            The cell type to be analyzed, by default 'Macrophage'
+        do_plot : bool, optional
+            Plot survival curve or not, by default True
+
+        """
         df1 = self.concat_df[self.concat_df[cell]==1]
         df0 = self.concat_df[self.concat_df[cell]==0]
 
@@ -103,11 +118,26 @@ class TCGA_Analysis():
         results = logrank_test(df1["OS_Time"], df0["OS_Time"], df1["OS_Status"], df0["OS_Status"], weightings = "wilcoxon")
         p_wil = float(results.summary["p"])
 
+        # summarize both test results
         self.res_log = pd.DataFrame({'log-rank':[p_log],'wilcoxon':[p_wil]})
         if do_plot:
             plot_curves(self.concat_df,target=[cell])
     
     def calc_top_bottom(self,cell='Macrophage',do_plot=True,title="Kaplan-Meier Plot",scale=4):
+        """Conduct survival time analysis. Restricted to samples with large and small contributions.
+
+        Parameters
+        ----------
+        cell : str, optional
+            The cell type to be analyzed, by default 'Macrophage'
+        do_plot : bool, optional
+            Plot survival curve or not, by default True
+        title : str, optional
+            Title displaed on the survival curve, by default "Kaplan-Meier Plot"
+        scale : int, optional
+            Parameters for dividing the contribution ratio, by default 4
+
+        """
         concat_value_df = self.concat_value_df.dropna()
         cell_value = sorted(concat_value_df[cell].tolist())
         lower_threshold = cell_value[len(concat_value_df)//scale]

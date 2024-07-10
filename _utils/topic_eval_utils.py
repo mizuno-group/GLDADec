@@ -44,7 +44,7 @@ class AddTopicEval():
         Args:
             deconv_res (list): pipeline.Pipeline().merge_total_res
         """
-        self.deocnv_res = deconv_res
+        self.deconv_res = deconv_res
     
     def flatten(self):
         """
