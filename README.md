@@ -11,7 +11,7 @@ Here, we proposed a Guided LDA Deconvolution method, called GLDADec, to estimate
 ## Getting Started
 #### Step 1. Clone this repository
 ```
-git clone https://github.com/mizuno-group/LiverDeconv.git
+git clone https://github.com/mizuno-group/GLDADec.git
 ```
 
 #### Step 2. Build for Cython files.
